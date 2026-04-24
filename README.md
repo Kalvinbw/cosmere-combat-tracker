@@ -1,5 +1,7 @@
 # Cosmere Combat Tracker
 
+> **Unofficial fan content, created and shared for non-commercial use. It has not been reviewed by Dragonsteel Entertainment, LLC or Brotherwise Games, LLC.**
+
 A web tool for building and evaluating combat encounters for the Cosmere TTRPG system. Calculate encounter difficulty using the official threat system, track HP/Focus/Investiture during combat, and manage your party's stats.
 
 ## Features
