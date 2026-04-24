@@ -1,0 +1,83 @@
+World,Tier,Adversary Name,Type,Physical Defense,Cognitive Defense,Spiritual Defense,Health,Focus,Investiture,Physical Skills,Cognitive Skills,Spiritual Skills,Invested Skills,To Hit Bonus,DPR (Fast),DPR (Slow)
+Mistborn,2,Kandra Defender,Rival,16,16,14,52,6,0,14,14,10,0,7,17,37
+Mistborn,3,Kandra Spy,Rival,17,16,20,58,5,0,23,17,32,0,8,26,26
+Stormlight,1,Archer,Minion,13,13,13,12,3,0,10,3,7,0,3,7,7
+Stormlight,1,Axehound,Minion,14,10,13,12,2,0,11,0,9,0,4,6,6
+Stormlight,1,Bandit,Minion,12,11,13,11,2,0,8,4,6,0,2,5,5
+Stormlight,1,Chull,Rival,14,11,13,30,3,0,6,0,5,0,4,9,9
+Stormlight,1,Commoner,Minion,11,12,11,10,2,0,1,2,4,0,1,3,3
+Stormlight,1,Cremling Swarm,Rival,14,13,13,22,4,0,5,0,0,0,5,10,10
+Stormlight,1,Crime Boss,Boss,15,17,16,50,6,0,11,20,25,0,6,15,15
+Stormlight,1,Expert,Rival,12,13,13,18,4,0,6,4,13,0,1,3,3
+Stormlight,1,Eyes of Pala Agent,Rival,14,13,15,25,4,0,12,4,10,0,4,10,10
+Stormlight,1,Ghostblood Spy,Rival,14,14,13,21,4,0,17,7,12,0,6,15,23
+Stormlight,1,Greater Skyeel,Rival,16,11,13,24,3,0,12,0,9,0,5,13,23
+Stormlight,1,Guard,Rival,14,13,14,24,4,0,10,8,9,0,5,14,23
+Stormlight,1,Juvenile Whitespine,Rival,15,12,13,23,4,0,17,4,10,0,5,24,24
+Stormlight,1,Kaiana,Rival,14,13,16,34,4,5,10,7,14,9,5,9,9
+Stormlight,1,Khornak,Rival,15,12,12,26,4,0,9,0,7,0,5,24,24
+Stormlight,1,Mink,Rival,14,11,14,10,2,0,14,0,9,0,3,5,5
+Stormlight,1,Nimbleform Singer,Rival,14,15,15,20,4,0,14,13,10,0,5,16,21
+Stormlight,1,Painspren,Minion,14,13,10,12,13,0,5,0,2,0,3,7,7
+Stormlight,1,Shadowform Zealot,Rival,15,14,14,22,5,4,18,5,8,0,6,14,14
+Stormlight,1,Shellmite,Minion,13,11,12,9,3,0,3,0,4,0,2,6,6
+Stormlight,1,Shellmite,Minion,13,11,12,9,3,0,3,0,4,0,2,4,4
+Stormlight,1,Skyeel,Minion,15,11,13,12,3,0,8,0,9,0,4,6,6
+Stormlight,1,Spear Infantry,Minion,14,12,13,14,3,0,11,5,4,0,3,11,11
+Stormlight,1,Swordmaster Ardent,Rival,14,11,16,22,3,0,13,7,14,0,5,8,16
+Stormlight,1,Tazo-son-Cluto,Rival,13,13,13,17,4,0,6,8,11,0,3,9,9
+Stormlight,1,Thief,Rival,14,13,13,20,3,0,20,0,10,0,5,9,9
+Stormlight,1,Thrill Berserker,Rival,14,14,14,22,5,0,11,5,7,0,4,12,16
+Stormlight,1,Veth,Boss,14,12,15,40,3,0,10,3,10,0,3,9,9
+Stormlight,1,Warfrom Singer,Rival,14,13,14,24,4,0,12,9,8,0,4,14,20
+Stormlight,1,Ylt,Boss,15,16,17,80,5,6,5,12,16,22,5,25,49
+Stormlight,1,Zealot,Minion,14,13,13,12,4,0,7,3,6,0,4,12,12
+Stormlight,2,Angerspren,Rival,18,14,14,38,6,0,14,7,5,0,8,13,24
+Stormlight,2,Assassin,Rival,16,15,15,40,5,0,28,16,11,0,8,20,20
+Stormlight,2,Brightlord,Rival,16,14,16,38,5,0,14,17,18,0,7,10,10
+Stormlight,2,Deepest One,Rival,18,17,16,45,8,6,22,9,19,9,8,20,40
+Stormlight,2,Devastating One,Rival,16,19,15,41,5,6,19,14,12,9,8,19,28
+Stormlight,2,Direform Regal,Rival,18,14,14,42,5,5,27,12,5,0,8,36,38
+Stormlight,2,Duelist Shardbearer,Rival,17,15,16,40,5,0,19,9,16,0,6,22,22
+Stormlight,2,Dustbringer (2nd Ideal),Rival,15,15,14,40,4,5,18,8,8,11,6,42,42
+Stormlight,2,Envoyform Regal,Minion,11,15,18,18,4,0,4,4,28,0,4,7,7
+Stormlight,2,Eyes of Pala Watcher,Rival,15,15,16,42,5,0,20,11,17,0,5,15,36
+Stormlight,2,Flowing One,Rival,17,15,15,45,6,5,18,7,12,9,9,33,33
+Stormlight,2,Ghostblood Enforcer,Rival,16,15,18,42,5,6,17,6,12,0,6,21,21
+Stormlight,2,Heavy Shardbearer,Rival,16,14,15,40,5,0,21,10,10,0,7,16,27
+Stormlight,2,Horse,Rival,17,11,14,25,3,0,13,0,5,0,6,10,19
+Stormlight,2,Husked One (Rival),Rival,16,18,15,48,4,6,14,14,4,9,7,14,19
+Stormlight,2,Larkin,Rival,14,13,14,14,4,5,5,0,13,0,5,7,7
+Stormlight,2,Lilinum,Rival,16,19,15,41,5,6,19,14,12,9,8,27,44
+Stormlight,2,Masked One,Rival,15,15,19,38,4,8,20,10,24,9,7,10,10
+Stormlight,2,Nightform Regal,Rival,14,16,16,32,4,7,12,16,14,0,6,18,18
+Stormlight,2,Relayform Regal,Minion,15,12,14,24,3,5,28,0,10,0,7,9,12
+Stormlight,2,Reveler of Ashertmarn,Rival,16,14,15,38,3,0,16,0,21,0,6,8,8
+Stormlight,2,Ryshadium,Rival,19,13,15,48,4,0,15,0,13,0,7,12,23
+Stormlight,2,Skybreaker (2nd Ideal),Rival,15,15,15,40,5,6,17,21,13,6,6,38,50
+Stormlight,2,Socialite,Rival,14,16,17,38,5,0,6,8,26,0,6,8,8
+Stormlight,2,Soulcaster Savant,Rival,13,16,18,32,6,0,0,17,16,0,7,10,19
+Stormlight,2,Spearmaster,Rival,15,14,13,38,5,0,19,8,8,0,6,14,28
+Stormlight,2,Stormform Regal,Rival,16,16,14,40,6,5,18,13,4,0,6,15,25
+Stormlight,2,Whitespine,Rival,17,12,14,42,4,0,19,5,12,0,7,22,22
+Stormlight,2,Windrunner Squire,Rival,13,13,16,40,4,2,14,5,18,8,5,9,9
+Stormlight,2,Yu-Nerig,Boss,18,15,16,144,5,0,14,6,5,0,8,17,32
+Stormlight,2,Yu-Thorak,Boss,19,14,16,126,5,0,8,5,14,0,8,12,20
+Stormlight,3,Altered One,Rival,14,20,17,60,8,6,14,36,23,10,9,21,35
+Stormlight,3,Altered One (Boss),Boss,14,22,17,180,9,9,14,40,22,11,9,22,44
+Stormlight,3,Axies,Rival,17,20,19,60,6,0,22,23,25,0,3,7,7
+Stormlight,3,Chasmfiend,Boss,22,17,17,198,7,0,20,9,9,0,11,42,42
+Stormlight,3,Dustbringer (3rd ideal),Rival,16,17,15,47,5,6,24,12,12,15,8,35,35
+Stormlight,3,Elite Shardbearer,Rival,17,16,17,55,7,0,30,17,24,0,10,22,22
+Stormlight,3,Focused One (Rival),Rival,17,16,16,62,6,5,22,14,22,11,11,16,27
+Stormlight,3,Heavenly One,Rival,18,15,18,58,6,8,25,16,26,10,9,36,36
+Stormlight,3,Husked One,Boss,16,20,16,185,7,6,16,18,19,11,8,20,40
+Stormlight,3,Magnified One,Boss,18,16,18,200,7,8,21,10,15,10,11,21,40
+Stormlight,3,Midnight Essence,Rival,19,15,16,52,6,0,17,0,19,0,9,16,16
+Stormlight,3,Sleepless,Rival,16,18,19,60,6,0,13,21,26,0,7,24,41
+Stormlight,3,Thunderclast,Boss,24,19,16,215,11,0,13,11,0,0,13,54,54
+Stormlight,4,Dusbringer (4th ideal),Rival,16,19,17,65,6,7,31,17,15,19,10,46,46
+Stormlight,4,Focused One,Boss,19,18,19,190,11,7,28,10,36,14,14,52,83
+Stormlight,4,Greater Larkin,Rival,17,16,15,42,5,6,8,5,23,0,8,18,18
+Stormlight,4,Servant of Yelig-Nar,Boss,23,20,17,240,10,9,46,11,10,81,12,25,29
+Stormlight,4,Skybreaker (4th ideal),Rival,16,19,18,65,6,7,29,34,25,17,9,26,37
