@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cosmere Encounter Calculator</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #21262d;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-muted: #8b949e;
+    --gold: #c9a227;
+    --gold-dim: #7a5f17;
+    --steel: #58a6ff;
+    --easy: #3fb950;
+    --medium: #e3b341;
+    --hard: #f08030;
+    --deadly: #da3633;
+    --trivial: #8b949e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  header {
+    text-align: center;
+    padding: 24px 0 20px;
+    border-bottom: 1px solid var(--gold-dim);
+    margin-bottom: 20px;
+  }
+  header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  header p {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .col-left { display: flex; flex-direction: column; gap: 16px; }
+  .col-right { display: flex; flex-direction: column; gap: 16px; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .card-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gold);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Party Setup */
+  .party-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+  .form-group label {
+    display: block;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .tier-buttons { display: flex; gap: 6px; }
+  .tier-btn {
+    flex: 1;
+    padding: 8px 4px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-muted);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+  .tier-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .tier-btn.active { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
+
+  .player-slider-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .player-slider-wrap input[type=range] {
+    flex: 1;
+    accent-color: var(--gold);
+    cursor: pointer;
+  }
+  .player-count-display {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--gold);
+    min-width: 28px;
+    text-align: center;
+  }
+  .benchmark-info {
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: var(--surface2);
+    border-radius: 6px;
+    border-left: 3px solid var(--gold-dim);
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .benchmark-info span { color: var(--text); font-weight: 600; }
+
+  /* Enemy List */
+  .filter-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  select, input[type=text] {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text);
+    padding: 6px 8px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  select:focus, input[type=text]:focus { border-color: var(--steel); }
+  select option { background: var(--surface2); }
+
+  .enemy-list {
+    max-height: 320px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+  .enemy-list::-webkit-scrollbar { width: 6px; }
+  .enemy-list::-webkit-scrollbar-track { background: var(--surface2); }
+  .enemy-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .enemy-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto auto;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .enemy-row:last-child { border-bottom: none; }
+  .enemy-row:hover { background: var(--surface2); }
+  .enemy-name { font-weight: 500; font-size: 13px; }
+  .enemy-meta { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+  .stat-pill {
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  .stat-pill span { color: var(--text); font-weight: 600; }
+  .type-badge {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 5px;
+    border-radius: 3px;
+  }
+  .type-Minion { background: #1f2e1f; color: #5fa85f; border: 1px solid #3a5a3a; }
+  .type-Rival  { background: #2a2520; color: #c9923a; border: 1px solid #5a4020; }
+  .type-Boss   { background: #2a1a1a; color: #da4444; border: 1px solid #5a2222; }
+
+  .add-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--steel);
+    font-size: 16px;
+    font-weight: 700;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .add-btn:hover { border-color: var(--steel); background: #161b2e; }
+
+  .enemy-count-tag {
+    font-size: 11px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1px 7px;
+    color: var(--gold);
+  }
+  .no-results {
+    padding: 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  /* Encounter Composition */
+  .encounter-empty {
+    text-align: center;
+    padding: 28px;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+  .encounter-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto auto;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+  .encounter-item:last-child { border-bottom: none; }
+  .encounter-item:hover { background: var(--surface2); }
+  .qty-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .qty-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 700;
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.1s;
+    line-height: 1;
+  }
+  .qty-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .qty-num {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--gold);
+    min-width: 18px;
+    text-align: center;
+  }
+  .remove-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: all 0.1s;
+    line-height: 1;
+  }
+  .remove-btn:hover { color: var(--deadly); background: #2a1a1a; }
+
+  .encounter-totals {
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: var(--surface2);
+    border-radius: 6px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .total-stat { font-size: 12px; color: var(--text-muted); }
+  .total-stat span { font-size: 16px; font-weight: 700; color: var(--text); display: block; }
+  .clear-btn {
+    margin-top: 10px;
+    width: 100%;
+    padding: 7px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .clear-btn:hover { border-color: var(--deadly); color: var(--deadly); }
+
+  /* Difficulty Output */
+  .difficulty-empty {
+    text-align: center;
+    padding: 28px;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+  .difficulty-rating {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 14px;
+    border: 2px solid;
+  }
+  .rating-label {
+    font-size: 26px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+  }
+  .rating-icon { font-size: 28px; }
+
+  .diff-trivial { border-color: var(--trivial); background: #1a1a1f; color: var(--trivial); }
+  .diff-easy    { border-color: var(--easy);    background: #0f2318; color: var(--easy);    }
+  .diff-medium  { border-color: var(--medium);  background: #1f1c0a; color: var(--medium);  }
+  .diff-hard    { border-color: var(--hard);    background: #1f1208; color: var(--hard);    }
+  .diff-deadly  { border-color: var(--deadly);  background: #1f0808; color: var(--deadly);  }
+
+  .diff-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .diff-stat-card {
+    background: var(--surface2);
+    border-radius: 6px;
+    padding: 10px 12px;
+  }
+  .diff-stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 4px;
+  }
+  .diff-stat-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .diff-stat-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .bar-section { margin-bottom: 12px; }
+  .bar-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+  }
+  .bar-label span { color: var(--text); font-weight: 600; }
+  .bar-track {
+    height: 8px;
+    background: var(--surface2);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+    max-width: 100%;
+  }
+  .bar-benchmark-marker {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 2px;
+    background: var(--text-muted);
+    opacity: 0.5;
+  }
+
+  .note-box {
+    padding: 10px 12px;
+    background: #161b22;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+  .note-box strong { color: var(--text); }
+
+  @media (max-width: 800px) {
+    .layout { grid-template-columns: 1fr; }
+    .party-grid { grid-template-columns: 1fr; }
+    .filter-row { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Cosmere Encounter Calculator</h1>
+  <p>Stormlight RPG · Adversary Difficulty Tool</p>
+</header>
+
+<div class="layout">
+  <div class="col-left">
+
+    <!-- Party Setup -->
+    <div class="card">
+      <div class="card-title">Party Setup</div>
+      <div class="party-grid">
+        <div class="form-group">
+          <label>Player Tier</label>
+          <div class="tier-buttons">
+            <div class="tier-btn active" data-tier="1" onclick="setTier(1)">1</div>
+            <div class="tier-btn" data-tier="2" onclick="setTier(2)">2</div>
+            <div class="tier-btn" data-tier="3" onclick="setTier(3)">3</div>
+            <div class="tier-btn" data-tier="4" onclick="setTier(4)">4</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Number of Players</label>
+          <div class="player-slider-wrap">
+            <input type="range" id="playerCount" min="1" max="11" value="4" oninput="setPlayers(this.value)">
+            <div class="player-count-display" id="playerDisplay">4</div>
+          </div>
+        </div>
+      </div>
+      <div class="benchmark-info" id="benchmarkInfo"></div>
+    </div>
+
+    <!-- Enemy Browser -->
+    <div class="card">
+      <div class="card-title">Add Enemies</div>
+      <div class="filter-row">
+        <select id="filterWorld" onchange="renderEnemyList()">
+          <option value="">All Worlds</option>
+          <option value="Stormlight">Stormlight</option>
+          <option value="Mistborn">Mistborn</option>
+          <option value="Warbreaker">Warbreaker</option>
+          <option value="Elantris">Elantris</option>
+          <option value="Worldhopper">Worldhopper</option>
+        </select>
+        <select id="filterType" onchange="renderEnemyList()">
+          <option value="">All Types</option>
+          <option value="Minion">Minion</option>
+          <option value="Rival">Rival</option>
+          <option value="Boss">Boss</option>
+        </select>
+        <select id="filterTier" onchange="renderEnemyList()">
+          <option value="">All Tiers</option>
+          <option value="1">Tier 1</option>
+          <option value="2">Tier 2</option>
+          <option value="3">Tier 3</option>
+          <option value="4">Tier 4</option>
+        </select>
+      </div>
+      <input type="text" id="searchBox" placeholder="Search by name…" oninput="renderEnemyList()">
+      <div style="margin-top:8px;">
+        <div class="enemy-list" id="enemyList"></div>
+      </div>
+    </div>
+
+  </div>
+  <div class="col-right">
+
+    <!-- Encounter Composition -->
+    <div class="card">
+      <div class="card-title">Encounter Composition</div>
+      <div id="encounterList"></div>
+      <div id="encounterTotals" style="display:none">
+        <div class="encounter-totals">
+          <div class="total-stat">
+            <span id="totalHP">—</span>
+            Total HP
+          </div>
+          <div class="total-stat">
+            <span id="totalDPR">—</span>
+            Total DPR (Fast)
+          </div>
+          <div class="total-stat">
+            <span id="totalDPRSlow">—</span>
+            Total DPR (Slow)
+          </div>
+          <div class="total-stat">
+            <span id="enemyCount">—</span>
+            Enemies
+          </div>
+        </div>
+        <button class="clear-btn" onclick="clearEncounter()">Clear Encounter</button>
+      </div>
+    </div>
+
+    <!-- Difficulty Output -->
+    <div class="card">
+      <div class="card-title">Difficulty Assessment</div>
+      <div id="difficultyOutput"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ─── DATA ──────────────────────────────────────────────────────────────────
+
+const ADVERSARIES = [
+  {"World":"Mistborn","Tier":2,"Adversary Name":"Kandra Defender","Type":"Rival","Physical Defense":16,"Cognitive Defense":16,"Spiritual Defense":14,"Health":52,"Focus":6,"Investiture":0,"Physical Skills":14,"Cognitive Skills":14,"Spiritual Skills":10,"Invested Skills":0,"To Hit Bonus":7,"DPR (Fast)":17,"DPR (Slow)":37},
+  {"World":"Mistborn","Tier":3,"Adversary Name":"Kandra Spy","Type":"Rival","Physical Defense":17,"Cognitive Defense":16,"Spiritual Defense":20,"Health":58,"Focus":5,"Investiture":0,"Physical Skills":23,"Cognitive Skills":17,"Spiritual Skills":32,"Invested Skills":0,"To Hit Bonus":8,"DPR (Fast)":26,"DPR (Slow)":26},
+  {"World":"Stormlight","Tier":1,"Adversary Name":"Archer","Type":"Minion","Physical Defense":13,"Cognitive Defense":13,"Spiritual Defense":13,"Health":12,"Focus":3,"Investiture":0,"Physical Skills":10,"Cognitive Skills":3,"Spiritual Skills":7,"Invested Skills":0,"To Hit Bonus":3,"DPR (Fast)":7,"DPR (Slow)":7},
+  {"World":"Stormlight","Tier":1,"Adversary Name":"Axehound","Type":"Minion","Physical Defense":14,"Cognitive Defense":10,"Spiritual Defense":13,"Health":12,"Focus":2,"Investiture":0,"Physical Skills":11,"Cognitive Skills":0,"Spiritual Skills":9,"Invested Skills":0,"To Hit Bonus":4,"DPR (Fast)":6,"DPR (Slow)":6},
+  {"World":"Stormlight","Tier":1,"Adversary Name":"Bandit","Type":"Minion","Physical Defense":12,"Cognitive Defense":11,"Spiritual Defense":13,"Health":11,"Focus":2,"Investiture":0,"Physical Skills":8,"Cognitive Skills":4,"Spiritual Skills":6,"Invested Skills":0,"To Hit Bonus":2,"DPR (Fast)":5,"DPR (Slow)":5},
+  {"World":"Stormlight","Tier":1,"Adversary Name":"Chull","Type":"Rival","Physical Defense":14,"Cognitive Defense":11,"Spiritual Defense":13,"Health":30,"Focus":3,"Investiture":0,"Physical Skills":6,"Cognitive Skills":0,"Spiritual Skills":5,"Invested Skills":0,"To Hit Bonus":4,"DPR (Fast)":9,"DPR (Slow)":9},
+  {"World":"Stormlight","Tier":1,"Adversary Name":"Commoner","Type":"Minion","Physical Defense":11,"Cognitive Defense":12,"Spiritual Defense":11,"Health":10,"Focus":2,"Investiture":0,"Physical Skills":1,"Cognitive Skills":2,"Spiritual Skills":4,"Invested Skills":0,"To Hit Bonus":1,"DPR (Fast)":3,"DPR (Slow)":3},
+  {"World":"Stormlight","Tier":1,"Adversary Name":"Cremling Swarm","Type":"Rival","Physical Defense":14,"Cognitive Defense":13,"Spiritual Defense":13,"Health":22,"Focus":4,"Investiture":0,"Physical Skills":5,"Cognitive Skills":0,"Spiritual Skills":0,"Invested Skills":0,"To Hit Bonus":5,"DPR (Fast)":10,"DPR (Slow)":10},
+  {"World":"Stormlight","Tier":1,"Adversary Name":"Crime Boss","Type":"Boss","Physical Defense":15,"Cognitive Defense":17,"Spiritual Defense":16,"Health":50,"Focus":6,"Investiture":0,"Physical Skills":11,"Cognitive Skills":20,"Spiritual Skills":25,"Invested Skills":0,"To Hit Bonus":6,"DPR (Fast)":15,"DPR (Slow)":15},
+  {"World":"Stormlight","Tier":1,"Adversary Name":"Expert","Type":"Rival","Physical Defense":12,"Cognitive Defense":13,"Spiritual Defense":13,"Health":18,"Focus":4,"Investiture":0,"Physical Skills":6,"Cognitive Skills":4,"Spiritual Skills":13,"Invested Skills":0,"To Hit Bonus":1,"DPR (Fast)":3,"DPR (Slow)":3},
+  {"World":"Stormlight","Tier":1,"Adversary Name":"Eyes of Pala Agent","Type":"Rival","Physical Defense":14,"Cognitive Defense":13,"Spiritual Defense":15,"Health":25,"Focus":4,"Investiture":0,"Physical Skills":12,"Cognitive Skills":4,"Spiritual Skills":10,"Invested Skills":0,"To Hit Bonus":4,"DPR (Fast)":10,"DPR (Slow)":10},
+  {"World":"Stormlight","Tier":1,"Adversary Name":"Ghostblood Spy","Type":"Rival","Physical Defense":14,"Cognitive Defense":14,"Spiritual Defense":13,"Health":21,"Focus":4,"Investiture":0,"Physical Skills":17,"Cognitive Skills":7,"Spiritual Skills":12,"Invested Skills":0,"To Hit Bonus":6,"DPR (Fast)":15,"DPR (Slow)":23},
+  {"World":"Stormlight","Tier":1,"Adversary Name":"Greater Skyeel","Type":"Rival","Physical Defense":16,"Cognitive Defense":11,"Spiritual Defense":13,"Health":24,"Focus":3,"Investiture":0,"Physical Skills":12,"Cognitive Skills":0,"Spiritual Skills":9,"Invested Skills":0,"To Hit Bonus":5,"DPR (Fast)":13,"DPR (Slow)":23},
+  {"World":"Stormlight","Tier":1,"Adversary Name":"Guard","Type":"Rival","Physical Defense":14,"Cognitive Defense":13,"Spiritual Defense":14,"Health":24,"Focus":4,"Investiture":0,"Physical Skills":10,"Cognitive Skills":8,"Spiritual Skills":9,"Invested Skills":0,"To Hit Bonus":5,"DPR (Fast)":14,"DPR (Slow)":23},
+  {"World":"Stormlight","Tier":1,"Adversary Name":"Juvenile Whitespine","Type":"Rival","Physical Defense":15,"Cognitive Defense":12,"Spiritual Defense":13,"Health":23,"Focus":4,"Investiture":0,"Physical Skills":17,"Cognitive Skills":4,"Spiritual Skills":10,"Invested Skills":0,"To Hit Bonus":5,"DPR (Fast)":24,"DPR (Slow)":24},
+  {"World":"Stormlight","Tier":1,"Adversary Name":"Kaiana","Type":"Rival","Physical Defense":14,"Cognitive Defense":13,"Spiritual Defense":16,"Health":34,"Focus":4,"Investiture":5,"Physical Skills":10,"Cognitive Skills":7,"Spiritual Skills":14,"Invested Skills":9,"To Hit Bonus":5,"DPR (Fast)":9,"DPR (Slow)":9},
+  {"World":"Stormlight","Tier":1,"Adversary Name":"Khornak","Type":"Rival","Physical Defense":15,"Cognitive Defense":12,"Spiritual Defense":12,"Health":26,"Focus":4,"Investiture":0,"Physical Skills":9,"Cognitive Skills":0,"Spiritual Skills":7,"Invested Skills":0,"To Hit Bonus":5,"DPR (Fast)":24,"DPR (Slow)":24},
+  {"World":"Stormlight","Tier":1,"Adversary Name":"Mink","Type":"Rival","Physical Defense":14,"Cognitive Defense":11,"Spiritual Defense":14,"Health":10,"Focus":2,"Investiture":0,"Physical Skills":14,"Cognitive Skills":0,"Spiritual Skills":9,"Invested Skills":0,"To Hit Bonus":3,"DPR (Fast)":5,"DPR (Slow)":5},
+  {"World":"Stormlight","Tier":1,"Adversary Name":"Nimbleform Singer","Type":"Rival","Physical Defense":14,"Cognitive Defense":15,"Spiritual Defense":15,"Health":20,"Focus":4,"Investiture":0,"Physical Skills":14,"Cognitive Skills":13,"Spiritual Skills":10,"Invested Skills":0,"To Hit Bonus":5,"DPR (Fast)":16,"DPR (Slow)":21},
+  {"World":"Stormlight","Tier":1,"Adversary Name":"Painspren","Type":"Minion","Physical Defense":14,"Cognitive Defense":13,"Spiritual Defense":10,"Health":12,"Focus":13,"Investiture":0,"Physical Skills":5,"Cognitive Skills":0,"Spiritual Skills":2,"Invested Skills":0,"To Hit Bonus":3,"DPR (Fast)":7,"DPR (Slow)":7},
+  {"World":"Stormlight","Tier":1,"Adversary Name":"Shadowform Zealot","Type":"Rival","Physical Defense":15,"Cognitive Defense":14,"Spiritual Defense":14,"Health":22,"Focus":5,"Investiture":4,"Physical Skills":18,"Cognitive Skills":5,"Spiritual Skills":8,"Invested Skills":0,"To Hit Bonus":6,"DPR (Fast)":14,"DPR (Slow)":14},
+  {"World":"Stormlight","Tier":1,"Adversary Name":"Shellmite (A)","Type":"Minion","Physical Defense":13,"Cognitive Defense":11,"Spiritual Defense":12,"Health":9,"Focus":3,"Investiture":0,"Physical Skills":3,"Cognitive Skills":0,"Spiritual Skills":4,"Invested Skills":0,"To Hit Bonus":2,"DPR (Fast)":6,"DPR (Slow)":6},
+  {"World":"Stormlight","Tier":1,"Adversary Name":"Shellmite (B)","Type":"Minion","Physical Defense":13,"Cognitive Defense":11,"Spiritual Defense":12,"Health":9,"Focus":3,"Investiture":0,"Physical Skills":3,"Cognitive Skills":0,"Spiritual Skills":4,"Invested Skills":0,"To Hit Bonus":2,"DPR (Fast)":4,"DPR (Slow)":4},
+  {"World":"Stormlight","Tier":1,"Adversary Name":"Skyeel","Type":"Minion","Physical Defense":15,"Cognitive Defense":11,"Spiritual Defense":13,"Health":12,"Focus":3,"Investiture":0,"Physical Skills":8,"Cognitive Skills":0,"Spiritual Skills":9,"Invested Skills":0,"To Hit Bonus":4,"DPR (Fast)":6,"DPR (Slow)":6},
+  {"World":"Stormlight","Tier":1,"Adversary Name":"Spear Infantry","Type":"Minion","Physical Defense":14,"Cognitive Defense":12,"Spiritual Defense":13,"Health":14,"Focus":3,"Investiture":0,"Physical Skills":11,"Cognitive Skills":5,"Spiritual Skills":4,"Invested Skills":0,"To Hit Bonus":3,"DPR (Fast)":11,"DPR (Slow)":11},
+  {"World":"Stormlight","Tier":1,"Adversary Name":"Swordmaster Ardent","Type":"Rival","Physical Defense":14,"Cognitive Defense":11,"Spiritual Defense":16,"Health":22,"Focus":3,"Investiture":0,"Physical Skills":13,"Cognitive Skills":7,"Spiritual Skills":14,"Invested Skills":0,"To Hit Bonus":5,"DPR (Fast)":8,"DPR (Slow)":16},
+  {"World":"Stormlight","Tier":1,"Adversary Name":"Tazo-son-Cluto","Type":"Rival","Physical Defense":13,"Cognitive Defense":13,"Spiritual Defense":13,"Health":17,"Focus":4,"Investiture":0,"Physical Skills":6,"Cognitive Skills":8,"Spiritual Skills":11,"Invested Skills":0,"To Hit Bonus":3,"DPR (Fast)":9,"DPR (Slow)":9},
+  {"World":"Stormlight","Tier":1,"Adversary Name":"Thief","Type":"Rival","Physical Defense":14,"Cognitive Defense":13,"Spiritual Defense":13,"Health":20,"Focus":3,"Investiture":0,"Physical Skills":20,"Cognitive Skills":0,"Spiritual Skills":10,"Invested Skills":0,"To Hit Bonus":5,"DPR (Fast)":9,"DPR (Slow)":9},
+  {"World":"Stormlight","Tier":1,"Adversary Name":"Thrill Berserker","Type":"Rival","Physical Defense":14,"Cognitive Defense":14,"Spiritual Defense":14,"Health":22,"Focus":5,"Investiture":0,"Physical Skills":11,"Cognitive Skills":5,"Spiritual Skills":7,"Invested Skills":0,"To Hit Bonus":4,"DPR (Fast)":12,"DPR (Slow)":16},
+  {"World":"Stormlight","Tier":1,"Adversary Name":"Veth","Type":"Boss","Physical Defense":14,"Cognitive Defense":12,"Spiritual Defense":15,"Health":40,"Focus":3,"Investiture":0,"Physical Skills":10,"Cognitive Skills":3,"Spiritual Skills":10,"Invested Skills":0,"To Hit Bonus":3,"DPR (Fast)":9,"DPR (Slow)":9},
+  {"World":"Stormlight","Tier":1,"Adversary Name":"Warfrom Singer","Type":"Rival","Physical Defense":14,"Cognitive Defense":13,"Spiritual Defense":14,"Health":24,"Focus":4,"Investiture":0,"Physical Skills":12,"Cognitive Skills":9,"Spiritual Skills":8,"Invested Skills":0,"To Hit Bonus":4,"DPR (Fast)":14,"DPR (Slow)":20},
+  {"World":"Stormlight","Tier":1,"Adversary Name":"Ylt","Type":"Boss","Physical Defense":15,"Cognitive Defense":16,"Spiritual Defense":17,"Health":80,"Focus":5,"Investiture":6,"Physical Skills":5,"Cognitive Skills":12,"Spiritual Skills":16,"Invested Skills":22,"To Hit Bonus":5,"DPR (Fast)":25,"DPR (Slow)":49},
+  {"World":"Stormlight","Tier":1,"Adversary Name":"Zealot","Type":"Minion","Physical Defense":14,"Cognitive Defense":13,"Spiritual Defense":13,"Health":12,"Focus":4,"Investiture":0,"Physical Skills":7,"Cognitive Skills":3,"Spiritual Skills":6,"Invested Skills":0,"To Hit Bonus":4,"DPR (Fast)":12,"DPR (Slow)":12},
+  {"World":"Stormlight","Tier":2,"Adversary Name":"Angerspren","Type":"Rival","Physical Defense":18,"Cognitive Defense":14,"Spiritual Defense":14,"Health":38,"Focus":6,"Investiture":0,"Physical Skills":14,"Cognitive Skills":7,"Spiritual Skills":5,"Invested Skills":0,"To Hit Bonus":8,"DPR (Fast)":13,"DPR (Slow)":24},
+  {"World":"Stormlight","Tier":2,"Adversary Name":"Assassin","Type":"Rival","Physical Defense":16,"Cognitive Defense":15,"Spiritual Defense":15,"Health":40,"Focus":5,"Investiture":0,"Physical Skills":28,"Cognitive Skills":16,"Spiritual Skills":11,"Invested Skills":0,"To Hit Bonus":8,"DPR (Fast)":20,"DPR (Slow)":20},
+  {"World":"Stormlight","Tier":2,"Adversary Name":"Brightlord","Type":"Rival","Physical Defense":16,"Cognitive Defense":14,"Spiritual Defense":16,"Health":38,"Focus":5,"Investiture":0,"Physical Skills":14,"Cognitive Skills":17,"Spiritual Skills":18,"Invested Skills":0,"To Hit Bonus":7,"DPR (Fast)":10,"DPR (Slow)":10},
+  {"World":"Stormlight","Tier":2,"Adversary Name":"Deepest One","Type":"Rival","Physical Defense":18,"Cognitive Defense":17,"Spiritual Defense":16,"Health":45,"Focus":8,"Investiture":6,"Physical Skills":22,"Cognitive Skills":9,"Spiritual Skills":19,"Invested Skills":9,"To Hit Bonus":8,"DPR (Fast)":20,"DPR (Slow)":40},
+  {"World":"Stormlight","Tier":2,"Adversary Name":"Devastating One","Type":"Rival","Physical Defense":16,"Cognitive Defense":19,"Spiritual Defense":15,"Health":41,"Focus":5,"Investiture":6,"Physical Skills":19,"Cognitive Skills":14,"Spiritual Skills":12,"Invested Skills":9,"To Hit Bonus":8,"DPR (Fast)":19,"DPR (Slow)":28},
+  {"World":"Stormlight","Tier":2,"Adversary Name":"Direform Regal","Type":"Rival","Physical Defense":18,"Cognitive Defense":14,"Spiritual Defense":14,"Health":42,"Focus":5,"Investiture":5,"Physical Skills":27,"Cognitive Skills":12,"Spiritual Skills":5,"Invested Skills":0,"To Hit Bonus":8,"DPR (Fast)":36,"DPR (Slow)":38},
+  {"World":"Stormlight","Tier":2,"Adversary Name":"Duelist Shardbearer","Type":"Rival","Physical Defense":17,"Cognitive Defense":15,"Spiritual Defense":16,"Health":40,"Focus":5,"Investiture":0,"Physical Skills":19,"Cognitive Skills":9,"Spiritual Skills":16,"Invested Skills":0,"To Hit Bonus":6,"DPR (Fast)":22,"DPR (Slow)":22},
+  {"World":"Stormlight","Tier":2,"Adversary Name":"Dustbringer (2nd Ideal)","Type":"Rival","Physical Defense":15,"Cognitive Defense":15,"Spiritual Defense":14,"Health":40,"Focus":4,"Investiture":5,"Physical Skills":18,"Cognitive Skills":8,"Spiritual Skills":8,"Invested Skills":11,"To Hit Bonus":6,"DPR (Fast)":42,"DPR (Slow)":42},
+  {"World":"Stormlight","Tier":2,"Adversary Name":"Envoyform Regal","Type":"Minion","Physical Defense":11,"Cognitive Defense":15,"Spiritual Defense":18,"Health":18,"Focus":4,"Investiture":0,"Physical Skills":4,"Cognitive Skills":4,"Spiritual Skills":28,"Invested Skills":0,"To Hit Bonus":4,"DPR (Fast)":7,"DPR (Slow)":7},
+  {"World":"Stormlight","Tier":2,"Adversary Name":"Eyes of Pala Watcher","Type":"Rival","Physical Defense":15,"Cognitive Defense":15,"Spiritual Defense":16,"Health":42,"Focus":5,"Investiture":0,"Physical Skills":20,"Cognitive Skills":11,"Spiritual Skills":17,"Invested Skills":0,"To Hit Bonus":5,"DPR (Fast)":15,"DPR (Slow)":36},
+  {"World":"Stormlight","Tier":2,"Adversary Name":"Flowing One","Type":"Rival","Physical Defense":17,"Cognitive Defense":15,"Spiritual Defense":15,"Health":45,"Focus":6,"Investiture":5,"Physical Skills":18,"Cognitive Skills":7,"Spiritual Skills":12,"Invested Skills":9,"To Hit Bonus":9,"DPR (Fast)":33,"DPR (Slow)":33},
+  {"World":"Stormlight","Tier":2,"Adversary Name":"Ghostblood Enforcer","Type":"Rival","Physical Defense":16,"Cognitive Defense":15,"Spiritual Defense":18,"Health":42,"Focus":5,"Investiture":6,"Physical Skills":17,"Cognitive Skills":6,"Spiritual Skills":12,"Invested Skills":0,"To Hit Bonus":6,"DPR (Fast)":21,"DPR (Slow)":21},
+  {"World":"Stormlight","Tier":2,"Adversary Name":"Heavy Shardbearer","Type":"Rival","Physical Defense":16,"Cognitive Defense":14,"Spiritual Defense":15,"Health":40,"Focus":5,"Investiture":0,"Physical Skills":21,"Cognitive Skills":10,"Spiritual Skills":10,"Invested Skills":0,"To Hit Bonus":7,"DPR (Fast)":16,"DPR (Slow)":27},
+  {"World":"Stormlight","Tier":2,"Adversary Name":"Horse","Type":"Rival","Physical Defense":17,"Cognitive Defense":11,"Spiritual Defense":14,"Health":25,"Focus":3,"Investiture":0,"Physical Skills":13,"Cognitive Skills":0,"Spiritual Skills":5,"Invested Skills":0,"To Hit Bonus":6,"DPR (Fast)":10,"DPR (Slow)":19},
+  {"World":"Stormlight","Tier":2,"Adversary Name":"Husked One (Rival)","Type":"Rival","Physical Defense":16,"Cognitive Defense":18,"Spiritual Defense":15,"Health":48,"Focus":4,"Investiture":6,"Physical Skills":14,"Cognitive Skills":14,"Spiritual Skills":4,"Invested Skills":9,"To Hit Bonus":7,"DPR (Fast)":14,"DPR (Slow)":19},
+  {"World":"Stormlight","Tier":2,"Adversary Name":"Larkin","Type":"Rival","Physical Defense":14,"Cognitive Defense":13,"Spiritual Defense":14,"Health":14,"Focus":4,"Investiture":5,"Physical Skills":5,"Cognitive Skills":0,"Spiritual Skills":13,"Invested Skills":0,"To Hit Bonus":5,"DPR (Fast)":7,"DPR (Slow)":7},
+  {"World":"Stormlight","Tier":2,"Adversary Name":"Lilinum","Type":"Rival","Physical Defense":16,"Cognitive Defense":19,"Spiritual Defense":15,"Health":41,"Focus":5,"Investiture":6,"Physical Skills":19,"Cognitive Skills":14,"Spiritual Skills":12,"Invested Skills":9,"To Hit Bonus":8,"DPR (Fast)":27,"DPR (Slow)":44},
+  {"World":"Stormlight","Tier":2,"Adversary Name":"Masked One","Type":"Rival","Physical Defense":15,"Cognitive Defense":15,"Spiritual Defense":19,"Health":38,"Focus":4,"Investiture":8,"Physical Skills":20,"Cognitive Skills":10,"Spiritual Skills":24,"Invested Skills":9,"To Hit Bonus":7,"DPR (Fast)":10,"DPR (Slow)":10},
+  {"World":"Stormlight","Tier":2,"Adversary Name":"Nightform Regal","Type":"Rival","Physical Defense":14,"Cognitive Defense":16,"Spiritual Defense":16,"Health":32,"Focus":4,"Investiture":7,"Physical Skills":12,"Cognitive Skills":16,"Spiritual Skills":14,"Invested Skills":0,"To Hit Bonus":6,"DPR (Fast)":18,"DPR (Slow)":18},
+  {"World":"Stormlight","Tier":2,"Adversary Name":"Relayform Regal","Type":"Minion","Physical Defense":15,"Cognitive Defense":12,"Spiritual Defense":14,"Health":24,"Focus":3,"Investiture":5,"Physical Skills":28,"Cognitive Skills":0,"Spiritual Skills":10,"Invested Skills":0,"To Hit Bonus":7,"DPR (Fast)":9,"DPR (Slow)":12},
+  {"World":"Stormlight","Tier":2,"Adversary Name":"Reveler of Ashertmarn","Type":"Rival","Physical Defense":16,"Cognitive Defense":14,"Spiritual Defense":15,"Health":38,"Focus":3,"Investiture":0,"Physical Skills":16,"Cognitive Skills":0,"Spiritual Skills":21,"Invested Skills":0,"To Hit Bonus":6,"DPR (Fast)":8,"DPR (Slow)":8},
+  {"World":"Stormlight","Tier":2,"Adversary Name":"Ryshadium","Type":"Rival","Physical Defense":19,"Cognitive Defense":13,"Spiritual Defense":15,"Health":48,"Focus":4,"Investiture":0,"Physical Skills":15,"Cognitive Skills":0,"Spiritual Skills":13,"Invested Skills":0,"To Hit Bonus":7,"DPR (Fast)":12,"DPR (Slow)":23},
+  {"World":"Stormlight","Tier":2,"Adversary Name":"Skybreaker (2nd Ideal)","Type":"Rival","Physical Defense":15,"Cognitive Defense":15,"Spiritual Defense":15,"Health":40,"Focus":5,"Investiture":6,"Physical Skills":17,"Cognitive Skills":21,"Spiritual Skills":13,"Invested Skills":6,"To Hit Bonus":6,"DPR (Fast)":38,"DPR (Slow)":50},
+  {"World":"Stormlight","Tier":2,"Adversary Name":"Socialite","Type":"Rival","Physical Defense":14,"Cognitive Defense":16,"Spiritual Defense":17,"Health":38,"Focus":5,"Investiture":0,"Physical Skills":6,"Cognitive Skills":8,"Spiritual Skills":26,"Invested Skills":0,"To Hit Bonus":6,"DPR (Fast)":8,"DPR (Slow)":8},
+  {"World":"Stormlight","Tier":2,"Adversary Name":"Soulcaster Savant","Type":"Rival","Physical Defense":13,"Cognitive Defense":16,"Spiritual Defense":18,"Health":32,"Focus":6,"Investiture":0,"Physical Skills":0,"Cognitive Skills":17,"Spiritual Skills":16,"Invested Skills":0,"To Hit Bonus":7,"DPR (Fast)":10,"DPR (Slow)":19},
+  {"World":"Stormlight","Tier":2,"Adversary Name":"Spearmaster","Type":"Rival","Physical Defense":15,"Cognitive Defense":14,"Spiritual Defense":13,"Health":38,"Focus":5,"Investiture":0,"Physical Skills":19,"Cognitive Skills":8,"Spiritual Skills":8,"Invested Skills":0,"To Hit Bonus":6,"DPR (Fast)":14,"DPR (Slow)":28},
+  {"World":"Stormlight","Tier":2,"Adversary Name":"Stormform Regal","Type":"Rival","Physical Defense":16,"Cognitive Defense":16,"Spiritual Defense":14,"Health":40,"Focus":6,"Investiture":5,"Physical Skills":18,"Cognitive Skills":13,"Spiritual Skills":4,"Invested Skills":0,"To Hit Bonus":6,"DPR (Fast)":15,"DPR (Slow)":25},
+  {"World":"Stormlight","Tier":2,"Adversary Name":"Whitespine","Type":"Rival","Physical Defense":17,"Cognitive Defense":12,"Spiritual Defense":14,"Health":42,"Focus":4,"Investiture":0,"Physical Skills":19,"Cognitive Skills":5,"Spiritual Skills":12,"Invested Skills":0,"To Hit Bonus":7,"DPR (Fast)":22,"DPR (Slow)":22},
+  {"World":"Stormlight","Tier":2,"Adversary Name":"Windrunner Squire","Type":"Rival","Physical Defense":13,"Cognitive Defense":13,"Spiritual Defense":16,"Health":40,"Focus":4,"Investiture":2,"Physical Skills":14,"Cognitive Skills":5,"Spiritual Skills":18,"Invested Skills":8,"To Hit Bonus":5,"DPR (Fast)":9,"DPR (Slow)":9},
+  {"World":"Stormlight","Tier":2,"Adversary Name":"Yu-Nerig","Type":"Boss","Physical Defense":18,"Cognitive Defense":15,"Spiritual Defense":16,"Health":144,"Focus":5,"Investiture":0,"Physical Skills":14,"Cognitive Skills":6,"Spiritual Skills":5,"Invested Skills":0,"To Hit Bonus":8,"DPR (Fast)":17,"DPR (Slow)":32},
+  {"World":"Stormlight","Tier":2,"Adversary Name":"Yu-Thorak","Type":"Boss","Physical Defense":19,"Cognitive Defense":14,"Spiritual Defense":16,"Health":126,"Focus":5,"Investiture":0,"Physical Skills":8,"Cognitive Skills":5,"Spiritual Skills":14,"Invested Skills":0,"To Hit Bonus":8,"DPR (Fast)":12,"DPR (Slow)":20},
+  {"World":"Stormlight","Tier":3,"Adversary Name":"Altered One","Type":"Rival","Physical Defense":14,"Cognitive Defense":20,"Spiritual Defense":17,"Health":60,"Focus":8,"Investiture":6,"Physical Skills":14,"Cognitive Skills":36,"Spiritual Skills":23,"Invested Skills":10,"To Hit Bonus":9,"DPR (Fast)":21,"DPR (Slow)":35},
+  {"World":"Stormlight","Tier":3,"Adversary Name":"Altered One (Boss)","Type":"Boss","Physical Defense":14,"Cognitive Defense":22,"Spiritual Defense":17,"Health":180,"Focus":9,"Investiture":9,"Physical Skills":14,"Cognitive Skills":40,"Spiritual Skills":22,"Invested Skills":11,"To Hit Bonus":9,"DPR (Fast)":22,"DPR (Slow)":44},
+  {"World":"Stormlight","Tier":3,"Adversary Name":"Axies","Type":"Rival","Physical Defense":17,"Cognitive Defense":20,"Spiritual Defense":19,"Health":60,"Focus":6,"Investiture":0,"Physical Skills":22,"Cognitive Skills":23,"Spiritual Skills":25,"Invested Skills":0,"To Hit Bonus":3,"DPR (Fast)":7,"DPR (Slow)":7},
+  {"World":"Stormlight","Tier":3,"Adversary Name":"Chasmfiend","Type":"Boss","Physical Defense":22,"Cognitive Defense":17,"Spiritual Defense":17,"Health":198,"Focus":7,"Investiture":0,"Physical Skills":20,"Cognitive Skills":9,"Spiritual Skills":9,"Invested Skills":0,"To Hit Bonus":11,"DPR (Fast)":42,"DPR (Slow)":42},
+  {"World":"Stormlight","Tier":3,"Adversary Name":"Dustbringer (3rd ideal)","Type":"Rival","Physical Defense":16,"Cognitive Defense":17,"Spiritual Defense":15,"Health":47,"Focus":5,"Investiture":6,"Physical Skills":24,"Cognitive Skills":12,"Spiritual Skills":12,"Invested Skills":15,"To Hit Bonus":8,"DPR (Fast)":35,"DPR (Slow)":35},
+  {"World":"Stormlight","Tier":3,"Adversary Name":"Elite Shardbearer","Type":"Rival","Physical Defense":17,"Cognitive Defense":16,"Spiritual Defense":17,"Health":55,"Focus":7,"Investiture":0,"Physical Skills":30,"Cognitive Skills":17,"Spiritual Skills":24,"Invested Skills":0,"To Hit Bonus":10,"DPR (Fast)":22,"DPR (Slow)":22},
+  {"World":"Stormlight","Tier":3,"Adversary Name":"Focused One (Rival)","Type":"Rival","Physical Defense":17,"Cognitive Defense":16,"Spiritual Defense":16,"Health":62,"Focus":6,"Investiture":5,"Physical Skills":22,"Cognitive Skills":14,"Spiritual Skills":22,"Invested Skills":11,"To Hit Bonus":11,"DPR (Fast)":16,"DPR (Slow)":27},
+  {"World":"Stormlight","Tier":3,"Adversary Name":"Heavenly One","Type":"Rival","Physical Defense":18,"Cognitive Defense":15,"Spiritual Defense":18,"Health":58,"Focus":6,"Investiture":8,"Physical Skills":25,"Cognitive Skills":16,"Spiritual Skills":26,"Invested Skills":10,"To Hit Bonus":9,"DPR (Fast)":36,"DPR (Slow)":36},
+  {"World":"Stormlight","Tier":3,"Adversary Name":"Husked One","Type":"Boss","Physical Defense":16,"Cognitive Defense":20,"Spiritual Defense":16,"Health":185,"Focus":7,"Investiture":6,"Physical Skills":16,"Cognitive Skills":18,"Spiritual Skills":19,"Invested Skills":11,"To Hit Bonus":8,"DPR (Fast)":20,"DPR (Slow)":40},
+  {"World":"Stormlight","Tier":3,"Adversary Name":"Magnified One","Type":"Boss","Physical Defense":18,"Cognitive Defense":16,"Spiritual Defense":18,"Health":200,"Focus":7,"Investiture":8,"Physical Skills":21,"Cognitive Skills":10,"Spiritual Skills":15,"Invested Skills":10,"To Hit Bonus":11,"DPR (Fast)":21,"DPR (Slow)":40},
+  {"World":"Stormlight","Tier":3,"Adversary Name":"Midnight Essence","Type":"Rival","Physical Defense":19,"Cognitive Defense":15,"Spiritual Defense":16,"Health":52,"Focus":6,"Investiture":0,"Physical Skills":17,"Cognitive Skills":0,"Spiritual Skills":19,"Invested Skills":0,"To Hit Bonus":9,"DPR (Fast)":16,"DPR (Slow)":16},
+  {"World":"Stormlight","Tier":3,"Adversary Name":"Sleepless","Type":"Rival","Physical Defense":16,"Cognitive Defense":18,"Spiritual Defense":19,"Health":60,"Focus":6,"Investiture":0,"Physical Skills":13,"Cognitive Skills":21,"Spiritual Skills":26,"Invested Skills":0,"To Hit Bonus":7,"DPR (Fast)":24,"DPR (Slow)":41},
+  {"World":"Stormlight","Tier":3,"Adversary Name":"Thunderclast","Type":"Boss","Physical Defense":24,"Cognitive Defense":19,"Spiritual Defense":16,"Health":215,"Focus":11,"Investiture":0,"Physical Skills":13,"Cognitive Skills":11,"Spiritual Skills":0,"Invested Skills":0,"To Hit Bonus":13,"DPR (Fast)":54,"DPR (Slow)":54},
+  {"World":"Stormlight","Tier":4,"Adversary Name":"Dusbringer (4th ideal)","Type":"Rival","Physical Defense":16,"Cognitive Defense":19,"Spiritual Defense":17,"Health":65,"Focus":6,"Investiture":7,"Physical Skills":31,"Cognitive Skills":17,"Spiritual Skills":15,"Invested Skills":19,"To Hit Bonus":10,"DPR (Fast)":46,"DPR (Slow)":46},
+  {"World":"Stormlight","Tier":4,"Adversary Name":"Focused One","Type":"Boss","Physical Defense":19,"Cognitive Defense":18,"Spiritual Defense":19,"Health":190,"Focus":11,"Investiture":7,"Physical Skills":28,"Cognitive Skills":10,"Spiritual Skills":36,"Invested Skills":14,"To Hit Bonus":14,"DPR (Fast)":52,"DPR (Slow)":83},
+  {"World":"Stormlight","Tier":4,"Adversary Name":"Greater Larkin","Type":"Rival","Physical Defense":17,"Cognitive Defense":16,"Spiritual Defense":15,"Health":42,"Focus":5,"Investiture":6,"Physical Skills":8,"Cognitive Skills":5,"Spiritual Skills":23,"Invested Skills":0,"To Hit Bonus":8,"DPR (Fast)":18,"DPR (Slow)":18},
+  {"World":"Stormlight","Tier":4,"Adversary Name":"Servant of Yelig-Nar","Type":"Boss","Physical Defense":23,"Cognitive Defense":20,"Spiritual Defense":17,"Health":240,"Focus":10,"Investiture":9,"Physical Skills":46,"Cognitive Skills":11,"Spiritual Skills":10,"Invested Skills":81,"To Hit Bonus":12,"DPR (Fast)":25,"DPR (Slow)":29},
+  {"World":"Stormlight","Tier":4,"Adversary Name":"Skybreaker (4th ideal)","Type":"Rival","Physical Defense":16,"Cognitive Defense":19,"Spiritual Defense":18,"Health":65,"Focus":6,"Investiture":7,"Physical Skills":29,"Cognitive Skills":34,"Spiritual Skills":25,"Invested Skills":17,"To Hit Bonus":9,"DPR (Fast)":26,"DPR (Slow)":37}
+];
+
+// PC DPR: rounds to kill a standard Boss of that tier, by player count
+const PC_DPR_ROUNDS = {
+  1: {0:18,1:16,2:14,3:13,4:11,5:10,6:10,7:9,8:8,9:8,10:7,11:7},
+  2: {0:81,1:58,2:46,3:38,4:33,5:29,6:26,7:23,8:21,9:19,10:18,11:17},
+  3: {0:128,1:91,2:72,3:59,4:50,5:44,6:39,7:35,8:32,9:29,10:27,11:25},
+  4: {0:null,1:212,2:117,3:84,4:66,5:55,6:47,7:42,8:37,9:34,10:31,11:28}
+};
+
+// Build-a-Bear average boss stats per tier (our benchmark "Medium" encounter)
+const BOSS_BENCHMARK = {
+  1: {hp:57, dprFast:16},
+  2: {hp:135, dprFast:15},
+  3: {hp:196, dprFast:32},
+  4: {hp:215, dprFast:39}
+};
+
+// PC Health ranges at end of each tier (max level in that tier)
+// Min: STR=0 at char creation, 0 STR allocations used
+// Max: STR=3 at char creation, all tier STR budgets to STR
+// STR budgets per tier: T1=1, T2=2, T3=2, T4=1 → max total STR = 9
+// Special level HP bonus (+current_STR) at L6, L11, L16 uses STR after previous tier's allocation
+const PC_HP = {
+  1: { min: 30, max: 33 },
+  2: { min: 50, max: 57 },
+  3: { min: 65, max: 78 },
+  4: { min: 75, max: 96 }
+};
+
+// ─── STATE ─────────────────────────────────────────────────────────────────
+
+let partyTier = 1;
+let partyPlayers = 4;
+// encounter: map of adversary index → quantity
+let encounter = new Map();
+
+// ─── PARTY SETUP ───────────────────────────────────────────────────────────
+
+function setTier(t) {
+  partyTier = t;
+  document.querySelectorAll('.tier-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.tier) === t);
+  });
+  // If player count has no data at this tier, clamp
+  if (partyTier === 4 && partyPlayers === 0) setPlayers(1);
+  updateBenchmark();
+  updateDifficulty();
+}
+
+function setPlayers(n) {
+  partyPlayers = parseInt(n);
+  document.getElementById('playerDisplay').textContent = partyPlayers;
+  document.getElementById('playerCount').value = partyPlayers;
+  updateBenchmark();
+  updateDifficulty();
+}
+
+function updateBenchmark() {
+  const rounds = PC_DPR_ROUNDS[partyTier][partyPlayers];
+  const bench = BOSS_BENCHMARK[partyTier];
+  const pcHP  = PC_HP[partyTier];
+  const el = document.getElementById('benchmarkInfo');
+  if (!rounds) {
+    el.innerHTML = `<span>Benchmark:</span> Tier ${partyTier} Boss (${bench.hp} HP) — not survivable with ${partyPlayers} player(s)`;
+    return;
+  }
+  const partyDPR    = (bench.hp / rounds).toFixed(1);
+  const partyHPMin  = partyPlayers * pcHP.min;
+  const partyHPMax  = partyPlayers * pcHP.max;
+  el.innerHTML = `<span>Benchmark (Medium):</span> Tier ${partyTier} Boss · ${bench.hp} HP · ${rounds} rds · ~${partyDPR} party DPR/rnd`
+    + `<br><span>Party HP:</span> ${pcHP.min}–${pcHP.max} per PC · ${partyHPMin}–${partyHPMax} total (${partyPlayers} players)`;
+}
+
+// ─── ENEMY LIST ────────────────────────────────────────────────────────────
+
+function getFiltered() {
+  const world = document.getElementById('filterWorld').value;
+  const type  = document.getElementById('filterType').value;
+  const tier  = document.getElementById('filterTier').value;
+  const q     = document.getElementById('searchBox').value.toLowerCase();
+  return ADVERSARIES.filter((a, i) => {
+    if (world && a.World !== world) return false;
+    if (type  && a.Type  !== type)  return false;
+    if (tier  && a.Tier  !== parseInt(tier)) return false;
+    if (q && !a['Adversary Name'].toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+
+function renderEnemyList() {
+  const filtered = getFiltered();
+  const el = document.getElementById('enemyList');
+  if (!filtered.length) {
+    el.innerHTML = '<div class="no-results">No adversaries match the current filters.</div>';
+    return;
+  }
+  el.innerHTML = filtered.map((a, fi) => {
+    const idx = ADVERSARIES.indexOf(a);
+    const qty = encounter.get(idx) || 0;
+    return `
+      <div class="enemy-row">
+        <div>
+          <div class="enemy-name">${a['Adversary Name']}</div>
+          <div class="enemy-meta">Tier ${a.Tier} · ${a.World}</div>
+        </div>
+        <span class="type-badge type-${a.Type}">${a.Type}</span>
+        <div class="stat-pill">HP <span>${a.Health}</span></div>
+        <div class="stat-pill">DPR <span>${a['DPR (Fast)']}</span></div>
+        ${qty > 0 ? `<span class="enemy-count-tag">×${qty}</span>` : '<span style="width:28px"></span>'}
+        <button class="add-btn" onclick="addEnemy(${idx})" title="Add to encounter">+</button>
+      </div>`;
+  }).join('');
+}
+
+function addEnemy(idx) {
+  encounter.set(idx, (encounter.get(idx) || 0) + 1);
+  renderEnemyList();
+  renderEncounter();
+  updateDifficulty();
+}
+
+// ─── ENCOUNTER ─────────────────────────────────────────────────────────────
+
+function removeEnemy(idx) {
+  encounter.delete(idx);
+  renderEnemyList();
+  renderEncounter();
+  updateDifficulty();
+}
+
+function changeQty(idx, delta) {
+  const cur = encounter.get(idx) || 0;
+  const next = cur + delta;
+  if (next <= 0) removeEnemy(idx);
+  else {
+    encounter.set(idx, next);
+    renderEnemyList();
+    renderEncounter();
+    updateDifficulty();
+  }
+}
+
+function clearEncounter() {
+  encounter.clear();
+  renderEnemyList();
+  renderEncounter();
+  updateDifficulty();
+}
+
+function renderEncounter() {
+  const listEl = document.getElementById('encounterList');
+  const totalsEl = document.getElementById('encounterTotals');
+
+  if (encounter.size === 0) {
+    listEl.innerHTML = '<div class="encounter-empty">Add enemies from the list on the left.</div>';
+    totalsEl.style.display = 'none';
+    return;
+  }
+
+  let totalHP = 0, totalDPRFast = 0, totalDPRSlow = 0, totalCount = 0;
+  let rows = '';
+
+  for (const [idx, qty] of encounter) {
+    const a = ADVERSARIES[idx];
+    const hp   = a.Health * qty;
+    const dprF = a['DPR (Fast)'] * qty;
+    const dprS = a['DPR (Slow)'] * qty;
+    totalHP      += hp;
+    totalDPRFast += dprF;
+    totalDPRSlow += dprS;
+    totalCount   += qty;
+    rows += `
+      <div class="encounter-item">
+        <div class="qty-controls">
+          <button class="qty-btn" onclick="changeQty(${idx},-1)">−</button>
+          <span class="qty-num">${qty}</span>
+          <button class="qty-btn" onclick="changeQty(${idx},+1)">+</button>
+        </div>
+        <div>
+          <div class="enemy-name">${a['Adversary Name']}</div>
+          <div class="enemy-meta"><span class="type-badge type-${a.Type}">${a.Type}</span> T${a.Tier} ${a.World}</div>
+        </div>
+        <div class="stat-pill">HP <span>${hp}</span></div>
+        <div class="stat-pill">DPR <span>${dprF}</span></div>
+        <button class="remove-btn" onclick="removeEnemy(${idx})" title="Remove">×</button>
+      </div>`;
+  }
+
+  listEl.innerHTML = rows;
+  totalsEl.style.display = 'block';
+  document.getElementById('totalHP').textContent    = totalHP;
+  document.getElementById('totalDPR').textContent   = totalDPRFast;
+  document.getElementById('totalDPRSlow').textContent = totalDPRSlow;
+  document.getElementById('enemyCount').textContent  = totalCount;
+}
+
+// ─── DIFFICULTY ────────────────────────────────────────────────────────────
+
+function updateDifficulty() {
+  const el = document.getElementById('difficultyOutput');
+
+  if (encounter.size === 0) {
+    el.innerHTML = '<div class="difficulty-empty">Add enemies to the encounter to see difficulty.</div>';
+    return;
+  }
+
+  const benchRounds = PC_DPR_ROUNDS[partyTier][partyPlayers];
+  const bench  = BOSS_BENCHMARK[partyTier];
+  const pcHP   = PC_HP[partyTier];
+
+  if (!benchRounds) {
+    el.innerHTML = '<div class="difficulty-empty" style="color:var(--deadly)">No benchmark data for this tier / player count combination.</div>';
+    return;
+  }
+
+  let totalHP = 0, totalDPRFast = 0, totalCount = 0;
+  for (const [idx, qty] of encounter) {
+    const a = ADVERSARIES[idx];
+    totalHP      += a.Health * qty;
+    totalDPRFast += a['DPR (Fast)'] * qty;
+    totalCount   += qty;
+  }
+
+  // Effective party DPR back-calculated from PC DPR table (bakes in hit rates, defenses)
+  const partyDPR  = bench.hp / benchRounds;
+  const estRounds = Math.ceil(totalHP / partyDPR);
+
+  // How does this encounter compare to the standard boss benchmark?
+  const hpRatio  = totalHP / bench.hp;           // enemy durability ratio (player-count independent)
+  const dprRatio = totalDPRFast / bench.dprFast;  // enemy damage ratio (player-count independent)
+
+  // Party HP for this tier and player count
+  const pcHPAvg    = (pcHP.min + pcHP.max) / 2;
+  const partyHPMin = partyPlayers * pcHP.min;
+  const partyHPMax = partyPlayers * pcHP.max;
+  const partyHPAvg = partyPlayers * pcHPAvg;
+
+  // Raw damage threat: total estimated enemy damage / total party HP.
+  // > 1.0 means enemies would theoretically exceed party HP if the fight goes to completion.
+  // Scales DOWN as players increase (more HP, same damage) — already player-count-sensitive.
+  const damageThreat = (totalDPRFast * estRounds) / partyHPAvg;
+
+  // Calibrate: divide by what the standard boss produces at 4 players for this tier.
+  // This makes "1 boss at 4 players" always land at score=1.0 (Medium baseline) across all tiers,
+  // while player count changes still propagate — more players lower the score, fewer raise it.
+  const benchRounds4p   = PC_DPR_ROUNDS[partyTier][4];
+  const dtCalibration   = bench.dprFast * benchRounds4p / (4 * pcHPAvg);
+  const adjDamageThreat = damageThreat / dtCalibration;
+
+  // Score: average of encounter duration load (hpRatio) and calibrated damage threat.
+  const score = (hpRatio + adjDamageThreat) / 2;
+
+  let rating, icon, cls, desc;
+  if (score < 0.25) {
+    rating = 'Trivial'; icon = '💤'; cls = 'diff-trivial';
+    desc = 'The party will overwhelm these enemies with minimal resource expenditure.';
+  } else if (score < 0.6) {
+    rating = 'Easy'; icon = '🌱'; cls = 'diff-easy';
+    desc = 'A light skirmish. The party should finish with most resources intact.';
+  } else if (score < 1.2) {
+    rating = 'Medium'; icon = '⚔️'; cls = 'diff-medium';
+    desc = 'A solid, balanced encounter. Expect meaningful HP and resource expenditure.';
+  } else if (score < 2.0) {
+    rating = 'Hard'; icon = '🔥'; cls = 'diff-hard';
+    desc = 'A demanding fight. Characters will likely drop; careful tactics required.';
+  } else {
+    rating = 'Deadly'; icon = '💀'; cls = 'diff-deadly';
+    desc = 'Estimated damage load exceeds party survivability. Wipe is a real risk.';
+  }
+
+  // Bar helpers — scale so benchmark boss sits at ~50% of each bar
+  const hpBarPct    = Math.min(hpRatio    / 2    * 100, 100);
+  const dprBarPct   = Math.min(dprRatio   / 2    * 100, 100);
+  const threatBarPct = Math.min(damageThreat / 2.5 * 100, 100);
+  const hpColor     = hpRatio    <= 1 ? 'var(--easy)'   : hpRatio    <= 1.5 ? 'var(--hard)' : 'var(--deadly)';
+  const dprColor    = dprRatio   <= 1 ? 'var(--medium)'  : dprRatio   <= 1.5 ? 'var(--hard)' : 'var(--deadly)';
+  const threatColor = adjDamageThreat <= 0.6 ? 'var(--easy)' : adjDamageThreat <= 1.2 ? 'var(--medium)' : adjDamageThreat <= 2.0 ? 'var(--hard)' : 'var(--deadly)';
+
+  el.innerHTML = `
+    <div class="difficulty-rating ${cls}">
+      <span class="rating-icon">${icon}</span>
+      <span class="rating-label">${rating}</span>
+    </div>
+
+    <div class="diff-stats">
+      <div class="diff-stat-card">
+        <div class="diff-stat-label">Est. Rounds to Clear</div>
+        <div class="diff-stat-value">${estRounds}</div>
+        <div class="diff-stat-sub">Benchmark: ${benchRounds} rds</div>
+      </div>
+      <div class="diff-stat-card">
+        <div class="diff-stat-label">Damage Threat</div>
+        <div class="diff-stat-value" style="color:${threatColor}">${Math.round(damageThreat * 100)}%</div>
+        <div class="diff-stat-sub">total dmg ÷ party HP · &gt;100% = exceeds HP</div>
+      </div>
+      <div class="diff-stat-card">
+        <div class="diff-stat-label">Party HP (${partyPlayers} PCs)</div>
+        <div class="diff-stat-value">${partyHPMin}–${partyHPMax}</div>
+        <div class="diff-stat-sub">${pcHP.min}–${pcHP.max} per PC · Tier ${partyTier}</div>
+      </div>
+      <div class="diff-stat-card">
+        <div class="diff-stat-label">DPR Pressure</div>
+        <div class="diff-stat-value">${Math.round(dprRatio * 100)}%</div>
+        <div class="diff-stat-sub">vs ${bench.dprFast} DPR standard boss</div>
+      </div>
+    </div>
+
+    <div class="bar-section">
+      <div class="bar-label">Enemy HP Load <span>${totalHP} HP vs ${bench.hp} benchmark</span></div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${hpBarPct}%;background:${hpColor}"></div>
+        <div class="bar-benchmark-marker" style="left:50%"></div>
+      </div>
+    </div>
+    <div class="bar-section">
+      <div class="bar-label">Enemy DPR Pressure <span>${totalDPRFast} DPR vs ${bench.dprFast} benchmark</span></div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${dprBarPct}%;background:${dprColor}"></div>
+        <div class="bar-benchmark-marker" style="left:50%"></div>
+      </div>
+    </div>
+    <div class="bar-section">
+      <div class="bar-label">Damage Threat <span>${Math.round(damageThreat * 100)}% of ${Math.round(partyHPAvg)} avg party HP · ${partyPlayers} players</span></div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${threatBarPct}%;background:${threatColor}"></div>
+        <div class="bar-benchmark-marker" style="left:40%" title="100% = party fully depleted"></div>
+      </div>
+    </div>
+
+    <div class="note-box">
+      <strong>${rating}:</strong> ${desc}
+      Vertical markers = 1× standard Tier ${partyTier} Boss. Rating uses a calibrated score so 1 boss at 4 players = Medium at every tier. Adding players lowers the score; removing players raises it.
+      PC HP: Tier ${partyTier} max-level, ${pcHP.min}–${pcHP.max} per PC (STR 0 → STR 9 build).
+    </div>`;
+}
+
+// ─── INIT ──────────────────────────────────────────────────────────────────
+
+updateBenchmark();
+renderEnemyList();
+renderEncounter();
+updateDifficulty();
+</script>
+</body>
+</html>
