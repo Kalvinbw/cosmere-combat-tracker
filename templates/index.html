@@ -105,6 +105,7 @@
   .threat-info-row { display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--text-muted); margin-bottom:8px; }
   .threat-info-row strong { color:var(--text); }
   .analysis-header { font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin:16px 0 10px; padding-top:14px; border-top:1px solid var(--border); }
+  .modal-note { font-size:11px; color:var(--text-muted); margin-bottom:10px; line-height:1.5; }
   .new-enemy-btn { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1px; padding:3px 9px; background:var(--surface2); border:1px solid var(--gold-dim); border-radius:4px; color:var(--gold); cursor:pointer; transition:all 0.15s; }
   .new-enemy-btn:hover { background:var(--gold-dim); border-color:var(--gold); }
   /* ── COMBAT ── */
@@ -335,9 +336,17 @@
       <div><div class="field-label">DPR (Fast) *</div><input type="number" id="f-dprfast"         value="0" min="0"></div>
       <div><div class="field-label">DPR (Slow) *</div><input type="number" id="f-dprslow"         value="0" min="0"></div>
     </div>
+    <div id="adminKeyRow" style="display:none;margin-bottom:10px">
+      <div class="field-label">Admin Key</div>
+      <input type="password" id="f-adminkey" placeholder="Enter admin key to save">
+    </div>
+    <div id="adminNote" class="modal-note" style="display:none">
+      Adding adversaries on the hosted version requires an admin key.
+      Running locally? The form is always open — see the README.
+    </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-      <button class="btn-primary" id="saveBtn" onclick="saveEnemy()">Save to Excel</button>
+      <button class="btn-primary" id="saveBtn" onclick="saveEnemy()">Save</button>
     </div>
     <div class="modal-error"   id="modalError"></div>
     <div class="modal-success" id="modalSuccess"></div>
@@ -349,6 +358,7 @@
 let ADVERSARIES=[],PC_DPR_ROUNDS={},BOSS_BENCHMARK={},PC_HP={};
 let partyTier=1,partyPlayers=4;
 let encounter=new Map();
+let adminLocked=false;
 // pcs[i] = {name,tier,maxHP,currentHP,maxFocus,currentFocus,maxInvestiture,currentInvestiture,turnType,down}
 let pcs=[];
 // combatants[] = enemy entries
@@ -357,10 +367,12 @@ let combatants=[],combatRound=1,nextCombatId=0;
 // ── INIT ─────────────────────────────────────────────────────────────────────
 async function init(){
   try{
-    const[ar,br]=await Promise.all([fetch('/api/adversaries'),fetch('/api/benchmarks')]);
+    const[ar,br,cr]=await Promise.all([fetch('/api/adversaries'),fetch('/api/benchmarks'),fetch('/api/config')]);
     ADVERSARIES=await ar.json();
     const bd=await br.json();
     PC_DPR_ROUNDS=bd.pc_dpr_rounds;BOSS_BENCHMARK=bd.boss_benchmark;PC_HP=bd.pc_hp;
+    const cfg=await cr.json();
+    adminLocked=cfg.admin_locked;
   }catch(e){
     document.getElementById('enemyList').innerHTML='<div class="no-results" style="color:var(--deadly)">Failed to load data.</div>';
     return;
@@ -752,7 +764,16 @@ function pcAdjRes(i,res,delta){const p=pcs[i];if(res==='focus')p.currentFocus=Ma
 function pcToggleDown(i){pcs[i].down=!pcs[i].down;if(!pcs[i].down&&pcs[i].currentHP===0)pcs[i].currentHP=1;renderCombat();}
 
 // ── MODAL ────────────────────────────────────────────────────────────────────
-function openModal(){document.getElementById('modalOverlay').classList.add('open');document.getElementById('modalError').style.display='none';document.getElementById('modalSuccess').style.display='none';document.getElementById('f-name').focus();}
+function openModal(){
+  document.getElementById('modalOverlay').classList.add('open');
+  document.getElementById('modalError').style.display='none';
+  document.getElementById('modalSuccess').style.display='none';
+  const show=adminLocked?'block':'none';
+  document.getElementById('adminKeyRow').style.display=show;
+  document.getElementById('adminNote').style.display=show;
+  if(adminLocked)document.getElementById('f-adminkey').value=sessionStorage.getItem('adminKey')||'';
+  document.getElementById('f-name').focus();
+}
 function closeModal(){document.getElementById('modalOverlay').classList.remove('open');}
 function onOverlayClick(e){if(e.target===document.getElementById('modalOverlay'))closeModal();}
 async function saveEnemy(){
@@ -776,9 +797,11 @@ async function saveEnemy(){
     'DPR (Slow)':parseInt(document.getElementById('f-dprslow').value)||0};
   saveBtn.disabled=true;
   try{
-    const res=await fetch('/api/adversaries',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const headers={'Content-Type':'application/json'};
+    if(adminLocked){const key=document.getElementById('f-adminkey').value.trim();sessionStorage.setItem('adminKey',key);headers['X-Admin-Key']=key;}
+    const res=await fetch('/api/adversaries',{method:'POST',headers,body:JSON.stringify(payload)});
     if(!res.ok){const err=await res.json();throw new Error(err.error||'Server error');}
-    okEl.textContent=`"${name}" saved to Excel.`;okEl.style.display='block';
+    okEl.textContent=`"${name}" saved.`;okEl.style.display='block';
     await reloadAdversaries();setTimeout(closeModal,1200);
   }catch(e){errEl.textContent=e.message;errEl.style.display='block';}
   finally{saveBtn.disabled=false;}

@@ -1,3 +1,4 @@
+import os
 from flask import Flask, jsonify, request, render_template
 from calculator import PC_DPR_ROUNDS, BOSS_BENCHMARK, PC_HP, compute_difficulty
 from data import load_adversaries, add_adversary
@@ -17,12 +18,20 @@ def get_adversaries():
 
 @app.route("/api/adversaries", methods=["POST"])
 def post_adversary():
+    admin_key = os.environ.get("ADMIN_KEY")
+    if admin_key and request.headers.get("X-Admin-Key") != admin_key:
+        return jsonify({"error": "Admin key required"}), 403
     data = request.get_json(force=True)
     for field in ("World", "Adversary Name", "Type", "Tier", "Health", "DPR (Fast)", "DPR (Slow)"):
         if not data.get(field) and data.get(field) != 0:
             return jsonify({"error": f"Missing required field: {field}"}), 400
     add_adversary(data)
     return jsonify({"ok": True}), 201
+
+
+@app.route("/api/config")
+def get_config():
+    return jsonify({"admin_locked": bool(os.environ.get("ADMIN_KEY"))})
 
 
 @app.route("/api/benchmarks")
