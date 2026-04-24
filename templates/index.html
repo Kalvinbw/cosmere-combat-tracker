@@ -718,7 +718,7 @@ function buildEnemyCard(c){
       <div class="cc-res-header"><span class="cc-res-label">Focus</span><span class="cc-res-value">${c.currentFocus} / ${c.maxFocus}</span></div>
       <div class="cc-bar"><div class="cc-bar-fill" style="width:${focusPct}%;background:var(--steel)"></div></div>
       <div class="cc-adj-row">
-        <button class="cc-btn" onclick="adjustRes(${c.id},'focus',2)">-2</button><button class="cc-btn" onclick="adjustRes(${c.id},'focus',-1)">-1</button>
+        <button class="cc-btn" onclick="adjustRes(${c.id},'focus',-2)">-2</button><button class="cc-btn" onclick="adjustRes(${c.id},'focus',-1)">-1</button>
         <button class="cc-btn" onclick="adjustRes(${c.id},'focus', 1)">+1</button><button class="cc-btn" onclick="adjustRes(${c.id},'focus', 5)">+2</button>
       </div></div>`:''}
     ${c.maxInvestiture>0?`<div class="cc-resource">
