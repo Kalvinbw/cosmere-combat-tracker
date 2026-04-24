@@ -1,6 +1,4 @@
 World,Tier,Adversary Name,Type,Physical Defense,Cognitive Defense,Spiritual Defense,Health,Focus,Investiture,Physical Skills,Cognitive Skills,Spiritual Skills,Invested Skills,To Hit Bonus,DPR (Fast),DPR (Slow)
-Mistborn,2,Kandra Defender,Rival,16,16,14,52,6,0,14,14,10,0,7,17,37
-Mistborn,3,Kandra Spy,Rival,17,16,20,58,5,0,23,17,32,0,8,26,26
 Stormlight,1,Archer,Minion,13,13,13,12,3,0,10,3,7,0,3,7,7
 Stormlight,1,Axehound,Minion,14,10,13,12,2,0,11,0,9,0,4,6,6
 Stormlight,1,Bandit,Minion,12,11,13,11,2,0,8,4,6,0,2,5,5
