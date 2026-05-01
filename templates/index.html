@@ -188,6 +188,33 @@
     .pc-table-head,.pc-config-row { grid-template-columns:18px 1fr 42px 52px 52px; }
     .pc-col-inv { display:none; }
   }
+  /* Tabs */
+  .tab-bar { max-width:1200px; margin:0 auto 20px; display:flex; border-bottom:1px solid var(--border); }
+  .tab-btn { padding:10px 24px; background:none; border:none; border-bottom:2px solid transparent; margin-bottom:-1px; color:var(--text-muted); font-size:12px; font-weight:600; letter-spacing:1px; text-transform:uppercase; cursor:pointer; transition:all 0.15s; }
+  .tab-btn:hover { color:var(--text); }
+  .tab-btn.active { color:var(--gold); border-bottom-color:var(--gold); }
+  .tab-panel { display:none; }
+  .tab-panel.active { display:block; }
+  /* Admin */
+  select,input[type=text],input[type=number],input[type=password] { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:5px; color:var(--text); padding:6px 8px; font-size:13px; outline:none; transition:border-color 0.15s; }
+  select:focus,input:focus { border-color:var(--steel); }
+  input[type=checkbox] { accent-color:var(--gold); width:auto; }
+  .admin-wrap { max-width:800px; margin:0 auto; display:flex; flex-direction:column; gap:16px; }
+  .admin-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  .ag-span2 { grid-column:span 2; } .ag-span3 { grid-column:span 3; } .ag-span4 { grid-column:1/-1; }
+  .abtn { padding:8px 16px; border-radius:5px; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.15s; border:1px solid; }
+  .abtn-primary { background:var(--gold-dim); border-color:var(--gold); color:var(--gold); }
+  .abtn-primary:hover { background:var(--gold); color:#000; }
+  .abtn-secondary { background:var(--surface2); border-color:var(--border); color:var(--text-muted); }
+  .abtn-secondary:hover { border-color:var(--text); color:var(--text); }
+  .abtn-danger { background:none; border-color:var(--border); color:var(--text-muted); }
+  .abtn-danger:hover { border-color:var(--deadly); color:var(--deadly); }
+  .astatus { margin-top:10px; padding:8px 12px; border-radius:5px; font-size:12px; line-height:1.7; display:none; }
+  .astatus.ok  { background:#0f2318; border:1px solid var(--easy);   color:var(--easy);   display:block; }
+  .astatus.err { background:#1f0808; border:1px solid var(--deadly); color:var(--deadly); display:block; }
+  .world-toggles { display:flex; flex-wrap:wrap; gap:8px; }
+  .world-toggle-label { display:flex; align-items:center; gap:6px; padding:5px 12px; background:var(--surface2); border:1px solid var(--border); border-radius:20px; font-size:13px; cursor:pointer; user-select:none; transition:border-color 0.15s; }
+  .world-toggle-label:hover { border-color:var(--gold); }
 </style>
 </head>
 <body>
@@ -196,6 +223,12 @@
   <p>Stormlight RPG · Adversary Difficulty Tool · <a href="https://github.com/Kalvinbw/cosmere-combat-tracker" target="_blank" rel="noopener" style="color:var(--gold-dim);text-decoration:none;letter-spacing:inherit">GitHub</a></p>
 </header>
 
+<div class="tab-bar">
+  <button class="tab-btn active" id="tabBtn-calc" onclick="showTab('calc')">Encounter Calculator</button>
+  <button class="tab-btn" id="tabBtn-admin" onclick="showTab('admin')">Admin</button>
+</div>
+
+<div id="tab-calc" class="tab-panel active">
 <div class="layout">
   <div class="col-left">
     <!-- Party Setup -->
@@ -230,10 +263,7 @@
 
     <!-- Enemy Browser -->
     <div class="card">
-      <div class="card-title">
-        Add Enemies
-        <button class="new-enemy-btn" onclick="openModal()">+ New Enemy</button>
-      </div>
+      <div class="card-title">Add Enemies</div>
       <div class="filter-row">
         <select id="filterWorld" onchange="renderEnemyList()">
           <option value="">All Worlds</option>
@@ -310,6 +340,80 @@
   </div>
 </div>
 
+</div><!-- #tab-calc -->
+
+<!-- Admin Tab -->
+<div id="tab-admin" class="tab-panel">
+  <div class="admin-wrap">
+
+    <!-- Login (shown when ADMIN_KEY is set and user hasn't entered it) -->
+    <div id="adminLogin" class="card">
+      <div class="card-title">Admin Login</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px" id="adminLoginNote">Enter your admin key to access admin features.</p>
+      <div style="display:flex;gap:8px;align-items:center;max-width:360px">
+        <input type="password" id="adminKeyInput" placeholder="Admin key" onkeydown="if(event.key==='Enter')doAdminLogin()">
+        <button class="abtn abtn-primary" onclick="doAdminLogin()" style="white-space:nowrap">Sign In</button>
+      </div>
+      <div id="loginErr" class="astatus err" style="display:none">Incorrect key — API returned 403.</div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="adminPanel" style="display:none">
+
+      <!-- World Visibility -->
+      <div class="card">
+        <div class="card-title">World Visibility</div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Control which worlds appear in the encounter calculator for everyone.</p>
+        <div class="world-toggles" id="worldToggles"></div>
+      </div>
+
+      <!-- Sync from Google Sheet -->
+      <div class="card">
+        <div class="card-title">Sync from Google Sheet</div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Fetch new adversaries from the sheet and add them to the server.</p>
+        <button class="abtn abtn-primary" id="syncBtn" onclick="syncFromSheet()">Check for Updates</button>
+        <div id="syncStatus" class="astatus"></div>
+      </div>
+
+      <!-- Create Adversary -->
+      <div class="card">
+        <div class="card-title">Create Adversary</div>
+        <div class="admin-grid">
+          <div class="form-group ag-span4"><div class="field-label">Adversary Name *</div><input type="text" id="ca-name" placeholder="e.g. Ancient Chasmfiend"></div>
+          <div class="form-group"><div class="field-label">World *</div><select id="ca-world"><option value="">— select —</option><option>Stormlight</option><option>Mistborn</option><option>Warbreaker</option><option>Elantris</option><option>Wax</option><option>Wayne</option><option>Worldhopper</option></select></div>
+          <div class="form-group"><div class="field-label">Tier *</div><select id="ca-tier"><option value="">—</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></div>
+          <div class="form-group ag-span2"><div class="field-label">Type *</div><select id="ca-type"><option value="">—</option><option>Minion</option><option>Rival</option><option>Boss</option></select></div>
+          <div class="form-group"><div class="field-label">Phys Defense</div><input type="number" id="ca-physdef" value="0" min="0"></div>
+          <div class="form-group"><div class="field-label">Cog Defense</div><input type="number" id="ca-cogdef" value="0" min="0"></div>
+          <div class="form-group"><div class="field-label">Spi Defense</div><input type="number" id="ca-spidef" value="0" min="0"></div>
+          <div class="form-group"><div class="field-label">Health *</div><input type="number" id="ca-health" value="0" min="0"></div>
+          <div class="form-group"><div class="field-label">Focus</div><input type="number" id="ca-focus" value="0" min="0"></div>
+          <div class="form-group"><div class="field-label">Investiture</div><input type="number" id="ca-investiture" value="0" min="0"></div>
+          <div class="form-group"><div class="field-label">Phys Skills</div><input type="number" id="ca-physskill" value="0" min="0"></div>
+          <div class="form-group"><div class="field-label">Cog Skills</div><input type="number" id="ca-cogskill" value="0" min="0"></div>
+          <div class="form-group"><div class="field-label">Spi Skills</div><input type="number" id="ca-spiskill" value="0" min="0"></div>
+          <div class="form-group"><div class="field-label">Inv Skills</div><input type="number" id="ca-invskill" value="0" min="0"></div>
+          <div class="form-group"><div class="field-label">To Hit Bonus</div><input type="number" id="ca-tohit" value="0" min="0"></div>
+          <div class="form-group"></div>
+          <div class="form-group ag-span2"><div class="field-label">DPR (Fast) *</div><input type="number" id="ca-dprfast" value="0" min="0"></div>
+          <div class="form-group ag-span2"><div class="field-label">DPR (Slow)</div><input type="number" id="ca-dprslow" value="0" min="0"></div>
+          <div class="ag-span4" style="margin-top:4px">
+            <button class="abtn abtn-primary" onclick="adminCreateAdversary()" style="width:100%">Add Adversary</button>
+          </div>
+        </div>
+        <div id="createStatus" class="astatus"></div>
+      </div>
+
+      <!-- Settings -->
+      <div class="card">
+        <div class="card-title">Settings</div>
+        <button class="abtn abtn-danger" onclick="doAdminLogout()" id="logoutBtn" style="display:none">Logout</button>
+      </div>
+
+    </div><!-- #adminPanel -->
+  </div><!-- .admin-wrap -->
+</div><!-- #tab-admin -->
+
 <!-- Add Enemy Modal -->
 <div class="modal-overlay" id="modalOverlay" onclick="onOverlayClick(event)">
   <div class="modal">
@@ -359,6 +463,22 @@ let ADVERSARIES=[],PC_DPR_ROUNDS={},BOSS_BENCHMARK={},PC_HP={};
 let partyTier=1,partyPlayers=4;
 let encounter=new Map();
 let adminLocked=false;
+let adminAuthed=false;
+
+// ── ADMIN CONFIG ──────────────────────────────────────────────────────────────
+const SHEET_ID='1znToovH68XfbhI5YPvEjsou3ADRslqX49Swf7UofZPA';
+const ALL_WORLDS=['Stormlight','Mistborn','Elantris','Warbreaker','Wax','Wayne','Worldhopper'];
+function getAdminKey()       { return sessionStorage.getItem('adminKey')||''; }
+function getEnabledWorlds()  { const s=localStorage.getItem('enabledWorlds'); return s?new Set(JSON.parse(s)):new Set(ALL_WORLDS); }
+function saveEnabledWorlds(set){ localStorage.setItem('enabledWorlds',JSON.stringify([...set])); }
+
+// ── TABS ──────────────────────────────────────────────────────────────────────
+function showTab(name){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  document.getElementById('tabBtn-'+name).classList.add('active');
+}
 // pcs[i] = {name,tier,maxHP,currentHP,maxFocus,currentFocus,maxInvestiture,currentInvestiture,turnType,down}
 let pcs=[];
 // combatants[] = enemy entries
@@ -377,7 +497,7 @@ async function init(){
     document.getElementById('enemyList').innerHTML='<div class="no-results" style="color:var(--deadly)">Failed to load data.</div>';
     return;
   }
-  syncPCCount();updateBenchmark();renderEnemyList();renderEncounter();updateDifficulty();
+  syncPCCount();updateBenchmark();updateWorldDropdown();renderEnemyList();renderEncounter();updateDifficulty();initAdminPanel();
 }
 async function reloadAdversaries(){ADVERSARIES=await(await fetch('/api/adversaries')).json();renderEnemyList();}
 
@@ -468,10 +588,18 @@ function updateBenchmark(){
 }
 
 // ── ENEMY LIST ───────────────────────────────────────────────────────────────
+function updateWorldDropdown(){
+  const enabled=getEnabledWorlds();
+  const worlds=[...new Set(ADVERSARIES.map(a=>a.World))].filter(w=>enabled.has(w)).sort();
+  const sel=document.getElementById('filterWorld'),cur=sel.value;
+  sel.innerHTML='<option value="">All Worlds</option>'+worlds.map(w=>`<option value="${w}"${w===cur?' selected':''}>${w}</option>`).join('');
+}
 function getFiltered(){
+  const enabled=getEnabledWorlds();
   const world=document.getElementById('filterWorld').value,type=document.getElementById('filterType').value,
         tier=document.getElementById('filterTier').value,q=document.getElementById('searchBox').value.toLowerCase();
   return ADVERSARIES.filter(a=>{
+    if(!enabled.has(a.World))return false;
     if(world&&a.World!==world)return false;
     if(type&&a.Type!==type)return false;
     if(tier&&a.Tier!==parseInt(tier))return false;
@@ -805,6 +933,145 @@ async function saveEnemy(){
     await reloadAdversaries();setTimeout(closeModal,1200);
   }catch(e){errEl.textContent=e.message;errEl.style.display='block';}
   finally{saveBtn.disabled=false;}
+}
+
+// ── ADMIN ─────────────────────────────────────────────────────────────────────
+function showAdminPanel(){
+  adminAuthed=true;
+  document.getElementById('adminLogin').style.display='none';
+  document.getElementById('adminPanel').style.display='';
+  document.getElementById('logoutBtn').style.display=adminLocked?'':'none';
+  renderWorldToggles();
+}
+function doAdminLogin(){
+  const key=document.getElementById('adminKeyInput').value.trim();
+  sessionStorage.setItem('adminKey',key);
+  showAdminPanel();
+}
+function doAdminLogout(){
+  adminAuthed=false;
+  sessionStorage.removeItem('adminKey');
+  document.getElementById('adminKeyInput').value='';
+  document.getElementById('adminPanel').style.display='none';
+  document.getElementById('adminLogin').style.display='';
+}
+
+function renderWorldToggles(){
+  const enabled=getEnabledWorlds();
+  document.getElementById('worldToggles').innerHTML=ALL_WORLDS.map(w=>`
+    <label class="world-toggle-label">
+      <input type="checkbox" ${enabled.has(w)?'checked':''} onchange="toggleWorld('${w}',this.checked)">
+      ${w}
+    </label>`).join('');
+}
+function toggleWorld(world,on){
+  const set=getEnabledWorlds();
+  on?set.add(world):set.delete(world);
+  saveEnabledWorlds(set);
+  updateWorldDropdown();
+  renderEnemyList();
+}
+
+function parseCSV(text){
+  return text.split('\n').map(line=>{
+    const cells=[];let cur='',inQ=false;
+    for(let i=0;i<line.length;i++){
+      if(line[i]==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}
+      else if(line[i]===','&&!inQ){cells.push(cur.trim());cur='';}
+      else cur+=line[i];
+    }
+    cells.push(cur.trim());return cells;
+  }).filter(r=>r.some(c=>c));
+}
+
+async function syncFromSheet(){
+  const btn=document.getElementById('syncBtn'),statusEl=document.getElementById('syncStatus');
+  btn.disabled=true;btn.textContent='Checking…';
+  statusEl.className='astatus';statusEl.style.display='none';
+
+  const NUM=['Physical Defense','Cognitive Defense','Spiritual Defense','Health','Focus',
+    'Investiture','Physical Skills','Cognitive Skills','Spiritual Skills','Invested Skills',
+    'To Hit Bonus','DPR (Fast)','DPR (Slow)'];
+  const existingKeys=new Set(ADVERSARIES.map(a=>`${a.World}|${a.Tier}|${a['Adversary Name']}`));
+  const newOnes=[];
+
+  for(const world of ALL_WORLDS){
+    for(const tier of [1,2,3,4]){
+      const sheetName=`${world}Tier${tier}`;
+      const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
+      try{
+        const resp=await fetch(url);if(!resp.ok)continue;
+        const rows=parseCSV(await resp.text());
+        if(!rows.length||!rows[0].includes('Adversary Name'))continue;
+        const header=rows[0],nameIdx=header.indexOf('Adversary Name');
+        for(const row of rows.slice(1)){
+          const name=row[nameIdx]?.trim();if(!name)continue;
+          const key=`${world}|${tier}|${name}`;if(existingKeys.has(key))continue;
+          const adv={'Adversary Name':name,World:world,Tier:tier};
+          header.forEach((h,i)=>{if(!h||h==='Adversary Name')return;adv[h]=NUM.includes(h)?(parseInt(row[i])||0):(row[i]||'');});
+          newOnes.push(adv);existingKeys.add(key);
+        }
+      }catch(_){}
+    }
+  }
+
+  btn.disabled=false;btn.textContent='Check for Updates';
+  if(!newOnes.length){setAStatus(statusEl,'Already up to date — no new adversaries found.',true);return;}
+
+  // POST each new one to the API
+  const headers={'Content-Type':'application/json'};
+  const key=getAdminKey();if(key)headers['X-Admin-Key']=key;
+  let added=0,failed=[];
+  for(const adv of newOnes){
+    try{
+      const res=await fetch('/api/adversaries',{method:'POST',headers,body:JSON.stringify(adv)});
+      if(res.ok)added++;else{const e=await res.json();failed.push(`${adv['Adversary Name']}: ${e.error||res.status}`);}
+    }catch(e){failed.push(`${adv['Adversary Name']}: network error`);}
+  }
+  await reloadAdversaries();
+  const msg=`Added ${added} of ${newOnes.length} adversaries.`+(failed.length?'\nFailed:\n'+failed.join('\n'):'');
+  setAStatus(statusEl,msg,!failed.length);
+}
+
+async function adminCreateAdversary(){
+  const statusEl=document.getElementById('createStatus');
+  const name=document.getElementById('ca-name').value.trim(),world=document.getElementById('ca-world').value,
+        tier=document.getElementById('ca-tier').value,type=document.getElementById('ca-type').value;
+  if(!name||!world||!tier||!type){setAStatus(statusEl,'Name, World, Tier, and Type are required.',false);return;}
+  const payload={
+    'Adversary Name':name,World:world,Tier:parseInt(tier),Type:type,
+    'Physical Defense':parseInt(document.getElementById('ca-physdef').value)||0,
+    'Cognitive Defense':parseInt(document.getElementById('ca-cogdef').value)||0,
+    'Spiritual Defense':parseInt(document.getElementById('ca-spidef').value)||0,
+    'Health':parseInt(document.getElementById('ca-health').value)||0,
+    'Focus':parseInt(document.getElementById('ca-focus').value)||0,
+    'Investiture':parseInt(document.getElementById('ca-investiture').value)||0,
+    'Physical Skills':parseInt(document.getElementById('ca-physskill').value)||0,
+    'Cognitive Skills':parseInt(document.getElementById('ca-cogskill').value)||0,
+    'Spiritual Skills':parseInt(document.getElementById('ca-spiskill').value)||0,
+    'Invested Skills':parseInt(document.getElementById('ca-invskill').value)||0,
+    'To Hit Bonus':parseInt(document.getElementById('ca-tohit').value)||0,
+    'DPR (Fast)':parseInt(document.getElementById('ca-dprfast').value)||0,
+    'DPR (Slow)':parseInt(document.getElementById('ca-dprslow').value)||0,
+  };
+  const headers={'Content-Type':'application/json'};
+  const key=getAdminKey();if(key)headers['X-Admin-Key']=key;
+  try{
+    const res=await fetch('/api/adversaries',{method:'POST',headers,body:JSON.stringify(payload)});
+    if(!res.ok){const e=await res.json();throw new Error(e.error||`HTTP ${res.status}`);}
+    setAStatus(statusEl,`"${name}" saved.`,true);
+    await reloadAdversaries();
+  }catch(e){setAStatus(statusEl,e.message,false);}
+}
+
+function setAStatus(el,msg,ok){el.textContent=msg;el.className='astatus '+(ok?'ok':'err');}
+
+function initAdminPanel(){
+  if(!adminLocked){
+    // No key required — show panel immediately
+    document.getElementById('adminLoginNote').textContent='No admin key required — running in open mode.';
+    showAdminPanel();
+  }
 }
 
 // ── BOOT ─────────────────────────────────────────────────────────────────────
