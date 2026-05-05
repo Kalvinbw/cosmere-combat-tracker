@@ -1,0 +1,71 @@
+<!-- Admin Tab -->
+<div id="tab-admin" class="tab-panel">
+  <div class="admin-wrap">
+
+    <!-- Login (shown when ADMIN_KEY is set and user hasn't entered it) -->
+    <div id="adminLogin" class="card">
+      <div class="card-title">Admin Login</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px" id="adminLoginNote">Enter your admin key to access admin features.</p>
+      <div style="display:flex;gap:8px;align-items:center;max-width:360px">
+        <input type="password" id="adminKeyInput" placeholder="Admin key" onkeydown="if(event.key==='Enter')doAdminLogin()">
+        <button class="abtn abtn-primary" onclick="doAdminLogin()" style="white-space:nowrap">Sign In</button>
+      </div>
+      <div id="loginErr" class="astatus err" style="display:none">Incorrect key — API returned 403.</div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="adminPanel" style="display:none">
+
+      <!-- World Visibility -->
+      <div class="card">
+        <div class="card-title">World Visibility</div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Control which worlds appear in the encounter calculator for everyone.</p>
+        <div class="world-toggles" id="worldToggles"></div>
+      </div>
+
+      <!-- Sync from Google Sheet -->
+      <div class="card">
+        <div class="card-title">Sync from Google Sheet</div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Fetch new adversaries from the sheet and add them to the server.</p>
+        <button class="abtn abtn-primary" id="syncBtn" onclick="syncFromSheet()">Check for Updates</button>
+        <div id="syncStatus" class="astatus"></div>
+      </div>
+
+      <!-- Create Adversary -->
+      <div class="card">
+        <div class="card-title">Create Adversary</div>
+        <div class="admin-grid">
+          <div class="form-group ag-span4"><div class="field-label">Adversary Name *</div><input type="text" id="ca-name" placeholder="e.g. Ancient Chasmfiend"></div>
+          <div class="form-group"><div class="field-label">World *</div><select id="ca-world"><option value="">— select —</option><option>Stormlight</option><option>Mistborn</option><option>Warbreaker</option><option>Elantris</option><option>Wax</option><option>Wayne</option><option>Worldhopper</option></select></div>
+          <div class="form-group"><div class="field-label">Tier *</div><select id="ca-tier"><option value="">—</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></div>
+          <div class="form-group ag-span2"><div class="field-label">Type *</div><select id="ca-type"><option value="">—</option><option>Minion</option><option>Rival</option><option>Boss</option></select></div>
+          <div class="form-group"><div class="field-label">Phys Defense</div><input type="number" id="ca-physdef" value="0" min="0"></div>
+          <div class="form-group"><div class="field-label">Cog Defense</div><input type="number" id="ca-cogdef" value="0" min="0"></div>
+          <div class="form-group"><div class="field-label">Spi Defense</div><input type="number" id="ca-spidef" value="0" min="0"></div>
+          <div class="form-group"><div class="field-label">Health *</div><input type="number" id="ca-health" value="0" min="0"></div>
+          <div class="form-group"><div class="field-label">Focus</div><input type="number" id="ca-focus" value="0" min="0"></div>
+          <div class="form-group"><div class="field-label">Investiture</div><input type="number" id="ca-investiture" value="0" min="0"></div>
+          <div class="form-group"><div class="field-label">Phys Skills</div><input type="number" id="ca-physskill" value="0" min="0"></div>
+          <div class="form-group"><div class="field-label">Cog Skills</div><input type="number" id="ca-cogskill" value="0" min="0"></div>
+          <div class="form-group"><div class="field-label">Spi Skills</div><input type="number" id="ca-spiskill" value="0" min="0"></div>
+          <div class="form-group"><div class="field-label">Inv Skills</div><input type="number" id="ca-invskill" value="0" min="0"></div>
+          <div class="form-group"><div class="field-label">To Hit Bonus</div><input type="number" id="ca-tohit" value="0" min="0"></div>
+          <div class="form-group"></div>
+          <div class="form-group ag-span2"><div class="field-label">DPR (Fast) *</div><input type="number" id="ca-dprfast" value="0" min="0"></div>
+          <div class="form-group ag-span2"><div class="field-label">DPR (Slow)</div><input type="number" id="ca-dprslow" value="0" min="0"></div>
+          <div class="ag-span4" style="margin-top:4px">
+            <button class="abtn abtn-primary" onclick="adminCreateAdversary()" style="width:100%">Add Adversary</button>
+          </div>
+        </div>
+        <div id="createStatus" class="astatus"></div>
+      </div>
+
+      <!-- Settings -->
+      <div class="card">
+        <div class="card-title">Settings</div>
+        <button class="abtn abtn-danger" onclick="doAdminLogout()" id="logoutBtn" style="display:none">Logout</button>
+      </div>
+
+    </div><!-- #adminPanel -->
+  </div><!-- .admin-wrap -->
+</div><!-- #tab-admin -->

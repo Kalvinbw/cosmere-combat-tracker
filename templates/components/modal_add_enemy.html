@@ -1,0 +1,42 @@
+<!-- Add Enemy Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="onOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-title">New Adversary <button class="modal-close" onclick="closeModal()">×</button></div>
+    <div class="modal-grid">
+      <div class="span2"><div class="field-label">Adversary Name *</div><input type="text" id="f-name" placeholder="e.g. Ancient Chasmfiend"></div>
+      <div><div class="field-label">World *</div><select id="f-world"><option value="">— select —</option><option>Stormlight</option><option>Mistborn</option><option>Warbreaker</option><option>Elantris</option><option>Worldhopper</option></select></div>
+      <div><div class="field-label">Tier *</div><select id="f-tier"><option value="">— select —</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></div>
+      <div><div class="field-label">Type *</div><select id="f-type"><option value="">— select —</option><option>Minion</option><option>Rival</option><option>Boss</option></select></div>
+      <div class="modal-section-label">Defenses &amp; Resources</div>
+      <div><div class="field-label">Physical Defense</div><input type="number" id="f-physdef"      value="0" min="0"></div>
+      <div><div class="field-label">Cognitive Defense</div><input type="number" id="f-cogdef"     value="0" min="0"></div>
+      <div><div class="field-label">Spiritual Defense</div><input type="number" id="f-spidef"     value="0" min="0"></div>
+      <div><div class="field-label">Health *</div><input type="number" id="f-health"              value="0" min="0"></div>
+      <div><div class="field-label">Focus</div><input type="number" id="f-focus"                  value="0" min="0"></div>
+      <div><div class="field-label">Investiture</div><input type="number" id="f-investiture"      value="0" min="0"></div>
+      <div class="modal-section-label">Skills</div>
+      <div><div class="field-label">Physical Skills</div><input type="number" id="f-physskill"    value="0" min="0"></div>
+      <div><div class="field-label">Cognitive Skills</div><input type="number" id="f-cogskill"    value="0" min="0"></div>
+      <div><div class="field-label">Spiritual Skills</div><input type="number" id="f-spiskill"    value="0" min="0"></div>
+      <div><div class="field-label">Invested Skills</div><input type="number" id="f-invskill"     value="0" min="0"></div>
+      <div class="modal-section-label">Combat</div>
+      <div><div class="field-label">To Hit Bonus</div><input type="number" id="f-tohit"           value="0" min="0"></div>
+      <div><div class="field-label">DPR (Fast) *</div><input type="number" id="f-dprfast"         value="0" min="0"></div>
+      <div><div class="field-label">DPR (Slow) *</div><input type="number" id="f-dprslow"         value="0" min="0"></div>
+    </div>
+    <div id="adminKeyRow" style="display:none;margin-bottom:10px">
+      <div class="field-label">Admin Key</div>
+      <input type="password" id="f-adminkey" placeholder="Enter admin key to save">
+    </div>
+    <div id="adminNote" class="modal-note" style="display:none">
+      Adding adversaries on the hosted version requires an admin key.
+      Running locally? The form is always open — see the README.
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-primary" id="saveBtn" onclick="saveEnemy()">Save</button>
+    </div>
+    <div class="modal-error"   id="modalError"></div>
+    <div class="modal-success" id="modalSuccess"></div>
+  </div>
+</div>

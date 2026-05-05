@@ -1,9 +1,11 @@
 import os
 from flask import Flask, jsonify, request, render_template
+from whitenoise import WhiteNoise
 from calculator import PC_DPR_ROUNDS, BOSS_BENCHMARK, PC_HP, compute_difficulty
 from data import load_adversaries, add_adversary
 
 app = Flask(__name__)
+app.wsgi_app = WhiteNoise(app.wsgi_app, root=os.path.join(os.path.dirname(__file__), 'static'), prefix='static', max_age=31536000)
 
 
 @app.route("/")

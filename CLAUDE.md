@@ -28,7 +28,18 @@ python sync_sheet.py
   - `compute_difficulty()` — supplementary HP/DPR analysis using hardcoded benchmark tables (`PC_DPR_ROUNDS`, `BOSS_BENCHMARK`, `PC_HP`). Returns `None` if the tier/player combo has no benchmark data (e.g., Tier 4 with 0 players).
 - `data.py` — reads/writes `adversaries.csv` via stdlib `csv`. Uses a simple mtime-based in-process cache (`_cache`). `add_adversary()` appends a row and invalidates the cache by setting `_cache["mtime"] = None`.
 - `sync_sheet.py` — standalone script that fetches each `{World}Tier{N}` tab from the public Google Sheet via `gviz/tq?tqx=out:csv` and appends rows not already in `adversaries.csv` (deduped on World + Tier + Adversary Name).
-- `templates/index.html` — entire frontend in one file. Vanilla JS makes fetch calls to `/api/adversaries`, `/api/difficulty`, `/api/benchmarks`, and `/api/config`.
+- Frontend — split across:
+  - `templates/base.html` — `<head>`, header, tab nav, loads `static/js/main.js` as an ES module
+  - `templates/index.html` — thin shell (`{% extends "base.html" %}` + `{% include %}` partials)
+  - `templates/components/` — `encounter_tab.html`, `combat_tracker.html`, `admin_tab.html`, `modal_add_enemy.html`
+  - `static/style.css` — all styles
+  - `static/js/state.js` — shared mutable state and constants
+  - `static/js/api.js` — all `fetch()` calls
+  - `static/js/encounter.js` — party setup, enemy browser, encounter, difficulty
+  - `static/js/combat.js` — combat tracker
+  - `static/js/admin.js` — admin panel, world visibility, Google Sheet sync
+  - `static/js/main.js` — entry point; imports all modules, exposes handlers to `window`, calls `init()`
+- **Static files** are served by WhiteNoise (WSGI middleware), bypassing Flask routing, with gzip compression and long-lived cache headers (`max_age=31536000`). Vanilla JS makes fetch calls to `/api/adversaries`, `/api/difficulty`, `/api/benchmarks`, and `/api/config`.
 
 **Admin key:** `POST /api/adversaries` is gated by `ADMIN_KEY` env var. If set, the request must include `X-Admin-Key: <value>`. Locally this is set in `.env` to `cosmere`. On Railway it should be set as a secret environment variable.
 

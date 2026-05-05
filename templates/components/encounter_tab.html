@@ -1,0 +1,94 @@
+<div id="tab-calc" class="tab-panel active">
+<div class="layout">
+  <div class="col-left">
+    <!-- Party Setup -->
+    <div class="card">
+      <div class="card-title">Party Setup</div>
+      <div class="party-grid">
+        <div class="form-group">
+          <label>Player Tier</label>
+          <div class="tier-buttons">
+            <div class="tier-btn active" data-tier="1" onclick="setTier(1)">1</div>
+            <div class="tier-btn" data-tier="2" onclick="setTier(2)">2</div>
+            <div class="tier-btn" data-tier="3" onclick="setTier(3)">3</div>
+            <div class="tier-btn" data-tier="4" onclick="setTier(4)">4</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Number of Players</label>
+          <div class="player-slider-wrap">
+            <input type="range" id="playerCount" min="1" max="11" value="4" oninput="setPlayers(this.value)">
+            <div class="player-count-display" id="playerDisplay">4</div>
+          </div>
+        </div>
+      </div>
+      <div class="benchmark-info" id="benchmarkInfo">Loading…</div>
+      <hr class="section-divider">
+      <div class="section-label">Party Members</div>
+      <div class="pc-table-head">
+        <span></span><span>Name</span><span>Tier</span><span>Max HP</span><span>Max Foc</span><span class="pc-col-inv">Max Inv</span>
+      </div>
+      <div id="pcList"></div>
+    </div>
+
+    <!-- Enemy Browser -->
+    <div class="card">
+      <div class="card-title">Add Enemies</div>
+      <div class="filter-row">
+        <select id="filterWorld" onchange="renderEnemyList()">
+          <option value="">All Worlds</option>
+          <option value="Stormlight">Stormlight</option>
+          <option value="Mistborn">Mistborn</option>
+          <option value="Warbreaker">Warbreaker</option>
+          <option value="Elantris">Elantris</option>
+          <option value="Worldhopper">Worldhopper</option>
+        </select>
+        <select id="filterType" onchange="renderEnemyList()">
+          <option value="">All Types</option>
+          <option value="Minion">Minion</option>
+          <option value="Rival">Rival</option>
+          <option value="Boss">Boss</option>
+        </select>
+        <select id="filterTier" onchange="renderEnemyList()">
+          <option value="">All Tiers</option>
+          <option value="1">Tier 1</option>
+          <option value="2">Tier 2</option>
+          <option value="3">Tier 3</option>
+          <option value="4">Tier 4</option>
+        </select>
+      </div>
+      <input type="text" id="searchBox" placeholder="Search by name…" oninput="renderEnemyList()">
+      <div style="margin-top:8px;"><div class="enemy-list" id="enemyList"><div class="no-results">Loading adversaries…</div></div></div>
+    </div>
+  </div>
+
+  <div class="col-right">
+    <!-- Encounter Composition -->
+    <div class="card">
+      <div class="card-title">
+        Encounter Composition
+        <button class="new-enemy-btn" id="startCombatBtn" onclick="startCombat()"
+          style="display:none;border-color:var(--easy);color:var(--easy)">▶ Start Combat</button>
+      </div>
+      <div id="encounterList"></div>
+      <div id="encounterTotals" style="display:none">
+        <div class="encounter-totals">
+          <div class="total-stat"><span id="totalHP">—</span>Total HP</div>
+          <div class="total-stat"><span id="totalDPR">—</span>Total DPR (Fast)</div>
+          <div class="total-stat"><span id="totalDPRSlow">—</span>Total DPR (Slow)</div>
+          <div class="total-stat"><span id="enemyCount">—</span>Enemies</div>
+        </div>
+        <button class="clear-btn" onclick="clearEncounter()">Clear Encounter</button>
+      </div>
+    </div>
+    <!-- Difficulty -->
+    <div class="card">
+      <div class="card-title">Difficulty Assessment</div>
+      <div id="difficultyOutput"></div>
+    </div>
+  </div>
+</div>
+
+{% include "components/combat_tracker.html" %}
+
+</div><!-- #tab-calc -->

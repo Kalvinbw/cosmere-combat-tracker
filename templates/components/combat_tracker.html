@@ -1,0 +1,24 @@
+<!-- Combat Tracker -->
+<div class="combat-wrap" id="combatWrap">
+  <div class="card">
+    <div class="card-title">
+      <div class="combat-header-row">
+        <span class="combat-round-label">Combat — Round <span id="combatRound">1</span></span>
+        <div class="combat-controls">
+          <button class="combat-btn combat-btn-next" onclick="nextRound()">Next Round</button>
+          <button class="combat-btn combat-btn-end"  onclick="endCombat()">End Combat</button>
+        </div>
+      </div>
+    </div>
+    <div id="combatPCSection" style="display:none">
+      <div class="combat-section-label party-label">Party</div>
+      <div class="combat-grid" id="combatPCGrid"></div>
+      <div id="combatAllySection" style="display:none">
+        <div class="section-label" style="color:var(--easy);margin:12px 0 6px;font-size:10px;letter-spacing:1px">Friendly NPCs</div>
+        <div class="combat-grid" id="combatAllyGrid"></div>
+      </div>
+    </div>
+    <div class="combat-section-label" id="combatEnemyLabel" style="margin-top:0">Enemies</div>
+    <div class="combat-grid" id="combatGrid"></div>
+  </div>
+</div>
