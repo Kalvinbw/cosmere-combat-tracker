@@ -54,7 +54,10 @@ def post_difficulty():
     except (KeyError, ValueError) as e:
         return jsonify({"error": str(e)}), 400
 
-    result = compute_difficulty(total_hp, total_dpr_fast, party_tier, party_players)
+    ally_hp = int(data.get("ally_hp", 0))
+    ally_dpr_fast = int(data.get("ally_dpr_fast", 0))
+    result = compute_difficulty(total_hp, total_dpr_fast, party_tier, party_players,
+                                ally_hp, ally_dpr_fast)
     if result is None:
         return jsonify({"error": "No benchmark data for this tier/player combination"}), 422
     return jsonify(result)
