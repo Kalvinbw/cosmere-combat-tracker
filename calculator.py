@@ -80,7 +80,8 @@ def get_rating(score):
     return "Deadly"
 
 
-def compute_difficulty(total_hp, total_dpr_fast, party_tier, party_players):
+def compute_difficulty(total_hp, total_dpr_fast, party_tier, party_players,
+                       ally_hp=0, ally_dpr_fast=0):
     """Returns difficulty dict, or None if no benchmark exists for tier/player combo."""
     tier_key = str(party_tier)
     player_key = str(party_players)
@@ -92,14 +93,15 @@ def compute_difficulty(total_hp, total_dpr_fast, party_tier, party_players):
     bench = BOSS_BENCHMARK[tier_key]
     pc_hp = PC_HP[tier_key]
 
+    pc_hp_avg = (pc_hp["min"] + pc_hp["max"]) / 2
+    party_hp_avg = party_players * pc_hp_avg + ally_hp
+
     party_dpr = bench["hp"] / bench_rounds
-    est_rounds = math.ceil(total_hp / party_dpr) if party_dpr > 0 else 0
+    effective_party_dpr = party_dpr + ally_dpr_fast
+    est_rounds = math.ceil(total_hp / effective_party_dpr) if effective_party_dpr > 0 else 0
 
     hp_ratio = total_hp / bench["hp"]
     dpr_ratio = total_dpr_fast / bench["dpr_fast"]
-
-    pc_hp_avg = (pc_hp["min"] + pc_hp["max"]) / 2
-    party_hp_avg = party_players * pc_hp_avg
 
     damage_threat = (total_dpr_fast * est_rounds) / party_hp_avg if party_hp_avg > 0 else 0
 
