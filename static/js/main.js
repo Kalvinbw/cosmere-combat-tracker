@@ -15,6 +15,7 @@ import {
   setTurn, applyHPAdj, adjustRes, toggleDefeated, toggleCombatInvInput, setCombatInv,
   setAllyTurn, applyAllyHP, adjustAllyRes, toggleAllyDefeated, toggleAllyInvInput, setAllyInv,
   pcSetTurn, pcApplyHP, pcAdjRes, pcToggleDown,
+  addMidCombat, openMidCombatModal, closeMidCombatModal, renderMidCombatList, selectMCAdversary, confirmMidCombat,
 } from './combat.js';
 import {
   openModal, closeModal, onOverlayClick, saveEnemy,
@@ -40,6 +41,8 @@ Object.assign(window, {
   setTurn, applyHPAdj, adjustRes, toggleDefeated, toggleCombatInvInput, setCombatInv,
   setAllyTurn, applyAllyHP, adjustAllyRes, toggleAllyDefeated, toggleAllyInvInput, setAllyInv,
   pcSetTurn, pcApplyHP, pcAdjRes, pcToggleDown,
+  // mid-combat
+  addMidCombat, openMidCombatModal, closeMidCombatModal, renderMidCombatList, selectMCAdversary, confirmMidCombat,
   // modal & admin
   openModal, closeModal, onOverlayClick, saveEnemy,
   doAdminLogin, doAdminLogout,

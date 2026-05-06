@@ -5,6 +5,7 @@
       <div class="combat-header-row">
         <span class="combat-round-label">Combat — Round <span id="combatRound">1</span></span>
         <div class="combat-controls">
+          <button class="combat-btn combat-btn-add" onclick="openMidCombatModal()">+ Add Combatant</button>
           <button class="combat-btn combat-btn-next" onclick="nextRound()">Next Round</button>
           <button class="combat-btn combat-btn-end"  onclick="endCombat()">End Combat</button>
         </div>
@@ -20,5 +21,48 @@
     </div>
     <div class="combat-section-label" id="combatEnemyLabel" style="margin-top:0">Enemies</div>
     <div class="combat-grid" id="combatGrid"></div>
+  </div>
+</div>
+
+<!-- Add Combatant Mid-Fight Modal -->
+<div class="modal-overlay" id="midCombatOverlay" onclick="if(event.target===this)closeMidCombatModal()">
+  <div class="modal">
+    <div class="modal-title">Add Combatant Mid-Fight <button class="modal-close" onclick="closeMidCombatModal()">×</button></div>
+    <div class="filter-row" style="margin-bottom:8px">
+      <select id="mcWorldFilter" onchange="renderMidCombatList()"><option value="">All Worlds</option></select>
+      <select id="mcTypeFilter" onchange="renderMidCombatList()">
+        <option value="">All Types</option>
+        <option>Minion</option><option>Rival</option><option>Boss</option>
+      </select>
+      <select id="mcTierFilter" onchange="renderMidCombatList()">
+        <option value="">All Tiers</option>
+        <option value="1">Tier 1</option><option value="2">Tier 2</option><option value="3">Tier 3</option><option value="4">Tier 4</option>
+      </select>
+    </div>
+    <input id="mcSearch" type="text" class="search-box" placeholder="Search adversaries…" oninput="renderMidCombatList()" style="width:100%;box-sizing:border-box;margin-bottom:8px">
+    <div id="mcEnemyList" class="enemy-list" style="max-height:280px;overflow-y:auto;margin-bottom:0"></div>
+    <div id="mcSelected" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
+      <div class="modal-grid">
+        <div>
+          <div class="field-label">Add As</div>
+          <select id="mcIsAlly">
+            <option value="0">Enemy</option>
+            <option value="1">Ally</option>
+          </select>
+        </div>
+        <div>
+          <div class="field-label">Quantity</div>
+          <input id="mcQty" type="number" min="1" max="20" value="1">
+        </div>
+        <div id="mcInvLabel" style="display:none">
+          <div class="field-label">Investiture</div>
+          <input id="mcInv" type="number" min="0" value="">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeMidCombatModal()">Cancel</button>
+        <button class="btn-primary" onclick="confirmMidCombat()">Add to Combat</button>
+      </div>
+    </div>
   </div>
 </div>

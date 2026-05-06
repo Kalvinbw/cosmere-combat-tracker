@@ -1,4 +1,5 @@
 import { state } from './state.js';
+import { getEnabledWorlds } from './encounter.js';
 
 export function startCombat() {
   if (state.encounter.size === 0 && state.encounterAllies.size === 0) return;
@@ -250,3 +251,92 @@ export function pcSetTurn(i, type) { state.pcs[i].turnType = state.pcs[i].turnTy
 export function pcApplyHP(i, mode) { const inp = document.getElementById('cc-hp-pc-' + i), amt = parseInt(inp.value); if (!amt || amt <= 0) return; const p = state.pcs[i]; p.currentHP = Math.min(p.maxHP, Math.max(0, p.currentHP + (mode === 'dmg' ? -amt : amt))); inp.value = ''; renderCombat(); }
 export function pcAdjRes(i, res, delta) { const p = state.pcs[i]; if (res === 'focus') p.currentFocus = Math.min(p.maxFocus, Math.max(0, p.currentFocus + delta)); else p.currentInvestiture = Math.min(p.maxInvestiture, Math.max(0, p.currentInvestiture + delta)); renderCombat(); }
 export function pcToggleDown(i) { state.pcs[i].down = !state.pcs[i].down; if (!state.pcs[i].down && state.pcs[i].currentHP === 0) state.pcs[i].currentHP = 1; renderCombat(); }
+
+// ── Mid-combat add ────────────────────────────────────────────────────────────
+let _mcSelectedIdx = null;
+
+export function addMidCombat(idx, qty, isAlly, investiture) {
+  const a = state.ADVERSARIES[idx];
+  const inv = investiture ?? a.Investiture;
+  for (let i = 1; i <= qty; i++) {
+    const label = qty > 1 ? `${a['Adversary Name']} #${i}` : a['Adversary Name'];
+    const c = {
+      id: state.nextCombatId++, adv: a, label,
+      maxHP: a.Health, currentHP: a.Health,
+      maxFocus: a.Focus, currentFocus: a.Focus,
+      maxInvestiture: inv, currentInvestiture: inv,
+      turnType: null, defeated: false,
+    };
+    if (isAlly) state.allies.push(c);
+    else state.combatants.push(c);
+  }
+  renderCombat();
+}
+
+export function openMidCombatModal() {
+  _mcSelectedIdx = null;
+  document.getElementById('mcSelected').style.display = 'none';
+  const enabled = getEnabledWorlds();
+  const worlds = [...new Set(state.ADVERSARIES.map(a => a.World))].filter(w => enabled.has(w)).sort();
+  const worldSel = document.getElementById('mcWorldFilter');
+  worldSel.innerHTML = '<option value="">All Worlds</option>' + worlds.map(w => `<option value="${w}">${w}</option>`).join('');
+  document.getElementById('mcTypeFilter').value = '';
+  document.getElementById('mcTierFilter').value = '';
+  document.getElementById('mcSearch').value = '';
+  renderMidCombatList();
+  document.getElementById('midCombatOverlay').classList.add('open');
+}
+
+export function closeMidCombatModal() {
+  document.getElementById('midCombatOverlay').classList.remove('open');
+}
+
+export function renderMidCombatList() {
+  const enabled = getEnabledWorlds();
+  const world = document.getElementById('mcWorldFilter').value;
+  const type  = document.getElementById('mcTypeFilter').value;
+  const tier  = document.getElementById('mcTierFilter').value;
+  const q     = document.getElementById('mcSearch').value.toLowerCase();
+  const filtered = state.ADVERSARIES.filter(a => {
+    if (!enabled.has(a.World)) return false;
+    if (world && a.World !== world) return false;
+    if (type  && a.Type  !== type)  return false;
+    if (tier  && a.Tier  !== parseInt(tier)) return false;
+    if (q && !a['Adversary Name'].toLowerCase().includes(q)) return false;
+    return true;
+  });
+  const el = document.getElementById('mcEnemyList');
+  if (!filtered.length) { el.innerHTML = '<div class="no-results">No adversaries match.</div>'; return; }
+  el.innerHTML = filtered.map(a => {
+    const idx = state.ADVERSARIES.indexOf(a);
+    const sel = idx === _mcSelectedIdx;
+    return `<div class="enemy-row" onclick="selectMCAdversary(${idx})" style="cursor:pointer${sel ? ';background:var(--surface2);border-left:2px solid var(--gold)' : ''}">
+      <div><div class="enemy-name">${a['Adversary Name']}</div><div class="enemy-meta">Tier ${a.Tier} · ${a.World}</div></div>
+      <span class="type-badge type-${a.Type}">${a.Type}</span>
+      <div class="stat-pill">HP <span>${a.Health}</span></div>
+      <div class="stat-pill">DPR <span>${a['DPR (Fast)']}</span></div>
+    </div>`;
+  }).join('');
+}
+
+export function selectMCAdversary(idx) {
+  _mcSelectedIdx = idx;
+  const a = state.ADVERSARIES[idx];
+  document.getElementById('mcSelected').style.display = 'block';
+  document.getElementById('mcQty').value = '1';
+  document.getElementById('mcIsAlly').value = '0';
+  const invLabel = document.getElementById('mcInvLabel');
+  invLabel.style.display = a.Investiture === 0 ? 'block' : 'none';
+  document.getElementById('mcInv').value = '';
+  renderMidCombatList();
+}
+
+export function confirmMidCombat() {
+  if (_mcSelectedIdx === null) return;
+  const qty = Math.max(1, parseInt(document.getElementById('mcQty').value) || 1);
+  const isAlly = document.getElementById('mcIsAlly').value === '1';
+  const invLabel = document.getElementById('mcInvLabel');
+  const inv = invLabel.style.display !== 'none' ? (parseInt(document.getElementById('mcInv').value) || 0) : undefined;
+  addMidCombat(_mcSelectedIdx, qty, isAlly, inv);
+  closeMidCombatModal();
+}

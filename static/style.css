@@ -112,6 +112,8 @@ select option { background:var(--surface2); }
 .combat-btn-next:hover { background:#0f2d1a; }
 .combat-btn-end  { background:#2a1a1a; border:1px solid var(--deadly); color:var(--deadly); }
 .combat-btn-end:hover  { background:#3a1a1a; }
+.combat-btn-add  { background:var(--surface2); border:1px solid var(--gold-dim); color:var(--gold); }
+.combat-btn-add:hover  { border-color:var(--gold); }
 .combat-section-label { font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:1.2px; margin:14px 0 8px; padding-bottom:6px; border-bottom:1px solid var(--border); }
 .combat-section-label.party-label { color:var(--gold); border-color:var(--gold-dim); }
 .combat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(265px,1fr)); gap:12px; }
