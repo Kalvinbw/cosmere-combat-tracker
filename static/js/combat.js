@@ -116,8 +116,10 @@ function buildPCCard(p, i) {
         <button class="cc-btn" onclick="pcAdjRes(${i},'investiture',-2)">-2</button><button class="cc-btn" onclick="pcAdjRes(${i},'investiture',-1)">-1</button>
         <button class="cc-btn" onclick="pcAdjRes(${i},'investiture', 1)">+1</button><button class="cc-btn" onclick="pcAdjRes(${i},'investiture', 5)">+2</button>
       </div></div>` : ''}
-    ${(p.physDef || p.cogDef || p.spiDef) ? `<div class="cc-stats">
-      <div class="cc-stat-row"><span class="cc-stat-key">DEF</span> Phys ${p.physDef} · Cog ${p.cogDef} · Spi ${p.spiDef}</div>
+    ${(p.physDef || p.cogDef || p.spiDef) ? `<div class="cc-defenses">
+      <div class="cc-def-chip cc-def-phys"><span class="cc-def-label">Phys</span><span class="cc-def-value">${p.physDef}</span></div>
+      <div class="cc-def-chip cc-def-cog"><span class="cc-def-label">Cog</span><span class="cc-def-value">${p.cogDef}</span></div>
+      <div class="cc-def-chip cc-def-spi"><span class="cc-def-label">Spi</span><span class="cc-def-value">${p.spiDef}</span></div>
     </div>` : ''}
     <button class="cc-defeat-btn${p.down ? ' cc-revive-btn' : ' cc-down-btn'}" onclick="pcToggleDown(${i})">${p.down ? 'Revive' : 'Down'}</button>
   </div>`;
@@ -166,8 +168,12 @@ function buildEnemyCard(c) {
           ? `<div class="cc-adj-row"><input type="number" class="cc-adj-input" id="cinv-${c.id}" min="1" placeholder="Max Inv" onkeydown="if(event.key==='Enter')setCombatInv(${c.id})"><button class="cc-btn" onclick="setCombatInv(${c.id})">Set</button><button class="cc-btn" onclick="toggleCombatInvInput(${c.id})">✕</button></div>`
           : `<button class="cc-btn" style="font-size:10px;padding:2px 6px;width:100%" onclick="toggleCombatInvInput(${c.id})">+ Add Investiture</button>`
         }</div>`}
+    <div class="cc-defenses">
+      <div class="cc-def-chip cc-def-phys"><span class="cc-def-label">Phys</span><span class="cc-def-value">${a['Physical Defense']}</span></div>
+      <div class="cc-def-chip cc-def-cog"><span class="cc-def-label">Cog</span><span class="cc-def-value">${a['Cognitive Defense']}</span></div>
+      <div class="cc-def-chip cc-def-spi"><span class="cc-def-label">Spi</span><span class="cc-def-value">${a['Spiritual Defense']}</span></div>
+    </div>
     <div class="cc-stats">
-      <div class="cc-stat-row"><span class="cc-stat-key">DEF</span> Phys ${a['Physical Defense']} · Cog ${a['Cognitive Defense']} · Spi ${a['Spiritual Defense']}</div>
       <div class="cc-stat-row"><span class="cc-stat-key">ATK</span> +${a['To Hit Bonus']} hit · <span class="cc-dpr-fast${fastDim?' dim':''}">Fast ${a['DPR (Fast)']}</span> · <span class="cc-dpr-slow${slowDim?' dim':''}">Slow ${a['DPR (Slow)']}</span></div>
       <div class="cc-stat-row"><span class="cc-stat-key">SKL</span> Phys ${a['Physical Skills']} · Cog ${a['Cognitive Skills']} · Spi ${a['Spiritual Skills']}${a['Invested Skills']>0?` · Inv ${a['Invested Skills']}`:''}</div>
     </div>
@@ -218,8 +224,12 @@ function buildAllyCard(c) {
           ? `<div class="cc-adj-row"><input type="number" class="cc-adj-input" id="cinv-${c.id}" min="1" placeholder="Max Inv" onkeydown="if(event.key==='Enter')setAllyInv(${c.id})"><button class="cc-btn" onclick="setAllyInv(${c.id})">Set</button><button class="cc-btn" onclick="toggleAllyInvInput(${c.id})">✕</button></div>`
           : `<button class="cc-btn" style="font-size:10px;padding:2px 6px;width:100%" onclick="toggleAllyInvInput(${c.id})">+ Add Investiture</button>`
         }</div>`}
+    <div class="cc-defenses">
+      <div class="cc-def-chip cc-def-phys"><span class="cc-def-label">Phys</span><span class="cc-def-value">${a['Physical Defense']}</span></div>
+      <div class="cc-def-chip cc-def-cog"><span class="cc-def-label">Cog</span><span class="cc-def-value">${a['Cognitive Defense']}</span></div>
+      <div class="cc-def-chip cc-def-spi"><span class="cc-def-label">Spi</span><span class="cc-def-value">${a['Spiritual Defense']}</span></div>
+    </div>
     <div class="cc-stats">
-      <div class="cc-stat-row"><span class="cc-stat-key">DEF</span> Phys ${a['Physical Defense']} · Cog ${a['Cognitive Defense']} · Spi ${a['Spiritual Defense']}</div>
       <div class="cc-stat-row"><span class="cc-stat-key">ATK</span> +${a['To Hit Bonus']} hit · <span class="cc-dpr-fast${fastDim?' dim':''}">Fast ${a['DPR (Fast)']}</span> · <span class="cc-dpr-slow${slowDim?' dim':''}">Slow ${a['DPR (Slow)']}</span></div>
       <div class="cc-stat-row"><span class="cc-stat-key">SKL</span> Phys ${a['Physical Skills']} · Cog ${a['Cognitive Skills']} · Spi ${a['Spiritual Skills']}${a['Invested Skills']>0?` · Inv ${a['Invested Skills']}`:''}</div>
     </div>

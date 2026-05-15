@@ -13,6 +13,7 @@ header p  { color:var(--text-muted); font-size:13px; margin-top:4px; letter-spac
 .col-left,.col-right { display:flex; flex-direction:column; gap:16px; }
 .card { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:16px; }
 .card-title { font-size:11px; font-weight:600; color:var(--gold); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+.card-desc  { font-size:12px; color:var(--text-muted); margin-bottom:12px; }
 .section-divider { border:none; border-top:1px solid var(--border); margin:12px 0; }
 .section-label { font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
 .party-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start; }
@@ -152,6 +153,16 @@ select option { background:var(--surface2); }
 .cc-dpr-fast { color:var(--easy);   font-weight:600; }
 .cc-dpr-slow { color:var(--medium); font-weight:600; }
 .cc-dpr-fast.dim,.cc-dpr-slow.dim { color:var(--text-muted); font-weight:normal; }
+.cc-defenses { display:flex; gap:5px; margin-bottom:8px; }
+.cc-def-chip { flex:1; text-align:center; border-radius:5px; padding:5px 4px; border:1px solid; }
+.cc-def-phys { background:#0d1e2e; border-color:#2a4a6a; }
+.cc-def-cog  { background:#1a1228; border-color:#4a2a6a; }
+.cc-def-spi  { background:#1a1508; border-color:#6a4a0a; }
+.cc-def-label { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); display:block; }
+.cc-def-value { font-size:17px; font-weight:800; display:block; line-height:1.2; }
+.cc-def-phys .cc-def-value { color:var(--steel); }
+.cc-def-cog  .cc-def-value { color:#a78bfa; }
+.cc-def-spi  .cc-def-value { color:var(--gold); }
 .cc-defeat-btn { margin-top:auto; padding:5px; background:none; border:1px solid #333; border-radius:4px; color:#555; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; cursor:pointer; transition:all 0.15s; width:100%; }
 .cc-defeat-btn:hover { border-color:var(--deadly); color:var(--deadly); background:#2a1a1a; }
 .cc-revive-btn { border-color:var(--easy)   !important; color:var(--easy)   !important; background:#0f2318 !important; }

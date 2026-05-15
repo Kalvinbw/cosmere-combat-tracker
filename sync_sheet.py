@@ -12,10 +12,10 @@ import sys
 import urllib.parse
 import urllib.request
 
+from data import WORLDS, TIERS
+
 SHEET_ID = "1znToovH68XfbhI5YPvEjsou3ADRslqX49Swf7UofZPA"
 SHEET_BASE = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}"
-WORLDS = ["Stormlight", "Mistborn", "Elantris", "Warbreaker", "Wax", "Wayne", "Worldhopper"]
-TIERS = [1, 2, 3, 4]
 CSV_PATH = "adversaries.csv"
 CSV_COLUMNS = [
     "World", "Tier", "Adversary Name", "Type",

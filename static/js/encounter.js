@@ -1,5 +1,5 @@
-import { state, ALL_WORLDS } from './state.js';
-import { fetchAdversaries } from './api.js';
+import { state } from './state.js';
+import { fetchAdversaries, postDifficulty } from './api.js';
 
 export function showTab(name) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
@@ -14,11 +14,39 @@ export async function reloadAdversaries() {
 }
 
 // ── PARTY SETUP ──────────────────────────────────────────────────────────────
+const PARTY_KEY = 'cosmere_party';
+
+export function saveParty() {
+  localStorage.setItem(PARTY_KEY, JSON.stringify({
+    partyTier: state.partyTier,
+    partyPlayers: state.partyPlayers,
+    pcs: state.pcs,
+  }));
+}
+
+export function loadParty() {
+  try {
+    const saved = localStorage.getItem(PARTY_KEY);
+    if (!saved) return;
+    const { partyTier, partyPlayers, pcs } = JSON.parse(saved);
+    state.partyTier    = partyTier;
+    state.partyPlayers = partyPlayers;
+    state.pcs          = pcs;
+    document.querySelectorAll('.tier-btn').forEach(b =>
+      b.classList.toggle('active', parseInt(b.dataset.tier) === partyTier));
+    const pd = document.getElementById('playerDisplay');
+    const pc = document.getElementById('playerCount');
+    if (pd) pd.textContent = partyPlayers;
+    if (pc) pc.value = partyPlayers;
+  } catch { /* ignore corrupt storage */ }
+}
+
 export function setTier(t) {
   state.partyTier = t;
   document.querySelectorAll('.tier-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.tier) === t));
   updateBenchmark();
   updateDifficulty();
+  saveParty();
 }
 
 export function setPlayers(n) {
@@ -28,6 +56,7 @@ export function setPlayers(n) {
   syncPCCount();
   updateBenchmark();
   updateDifficulty();
+  saveParty();
 }
 
 // ── PC CONFIG ────────────────────────────────────────────────────────────────
@@ -46,8 +75,8 @@ export function renderPCList() {
     <div class="pc-config-row">
       <span class="pc-num">${i + 1}</span>
       <input class="pc-input" type="text" placeholder="Name" value="${p.name.replace(/"/g, '&quot;')}"
-        oninput="pcs[${i}].name=this.value">
-      <select class="pc-input" onchange="pcs[${i}].tier=parseInt(this.value);updateBenchmark();updateDifficulty()">
+        oninput="pcs[${i}].name=this.value;saveParty()">
+      <select class="pc-input" onchange="pcs[${i}].tier=parseInt(this.value);updateBenchmark();updateDifficulty();saveParty()">
         ${[1,2,3,4].map(t => `<option value="${t}"${p.tier===t?' selected':''}>${t}</option>`).join('')}
       </select>
       <input class="pc-input" type="number" placeholder="HP" min="0" value="${p.maxHP||''}"
@@ -60,13 +89,13 @@ export function renderPCList() {
     <div class="pc-def-row">
       <span class="pc-def-label">Phys Def</span>
       <input class="pc-input" type="number" style="width:48px" placeholder="—" min="0" value="${p.physDef||''}"
-        oninput="pcs[${i}].physDef=parseInt(this.value)||0">
+        oninput="pcs[${i}].physDef=parseInt(this.value)||0;saveParty()">
       <span class="pc-def-label">Cog</span>
       <input class="pc-input" type="number" style="width:48px" placeholder="—" min="0" value="${p.cogDef||''}"
-        oninput="pcs[${i}].cogDef=parseInt(this.value)||0">
+        oninput="pcs[${i}].cogDef=parseInt(this.value)||0;saveParty()">
       <span class="pc-def-label">Spi</span>
       <input class="pc-input" type="number" style="width:48px" placeholder="—" min="0" value="${p.spiDef||''}"
-        oninput="pcs[${i}].spiDef=parseInt(this.value)||0">
+        oninput="pcs[${i}].spiDef=parseInt(this.value)||0;saveParty()">
     </div>`).join('');
 }
 
@@ -77,6 +106,7 @@ export function pcSetStat(i, field, val) {
   if (field === 'maxInvestiture') state.pcs[i].currentInvestiture = val;
   updateBenchmark();
   updateDifficulty();
+  saveParty();
 }
 
 export function usingActualHP() {
@@ -287,39 +317,7 @@ export function clearAllyEncInv(idx) {
 }
 
 // ── DIFFICULTY ───────────────────────────────────────────────────────────────
-function computeEncounterThreat() {
-  const BASE = { Minion:0.5, Rival:1.0, Boss:4.0 };
-  let total = 0;
-  for (const [idx, qty] of state.encounter) {
-    const a = state.ADVERSARIES[idx];
-    const base = BASE[a.Type] ?? 1.0;
-    const tierDelta = (a.Tier || state.partyTier) - state.partyTier;
-    const scaled = Math.round(base * Math.pow(2, tierDelta) * 4) / 4;
-    total += scaled * qty;
-  }
-  return Math.round(total * 10000) / 10000;
-}
-
-function computeAllyThreat() {
-  const BASE = { Minion:0.5, Rival:1.0, Boss:4.0 };
-  let total = 0;
-  for (const [idx, qty] of state.encounterAllies) {
-    const a = state.ADVERSARIES[idx];
-    const base = BASE[a.Type] ?? 1.0;
-    const tierDelta = (a.Tier || state.partyTier) - state.partyTier;
-    const scaled = Math.round(base * Math.pow(2, tierDelta) * 4) / 4;
-    total += scaled * qty;
-  }
-  return Math.round(total * 10000) / 10000;
-}
-
-function getThreatRating(total, numPCs) {
-  if (total < 0.5 * numPCs) return 'Trivial';
-  if (total < 1.0 * numPCs) return 'Easy';
-  if (total < 1.5 * numPCs) return 'Medium';
-  if (total < 2.0 * numPCs) return 'Hard';
-  return 'Deadly';
-}
+let _difficultyTimer = null;
 
 export function updateDifficulty() {
   const el = document.getElementById('difficultyOutput');
@@ -329,50 +327,57 @@ export function updateDifficulty() {
   if (state.encounter.size === 0) {
     el.innerHTML = '<div class="difficulty-empty">Add enemies to calculate difficulty.</div>'; return;
   }
+  clearTimeout(_difficultyTimer);
+  _difficultyTimer = setTimeout(_fetchAndRenderDifficulty, 300);
+}
 
-  const totalThreat = computeEncounterThreat();
-  const allyThreat  = computeAllyThreat();
-  const netThreat   = Math.max(0, totalThreat - allyThreat);
-  const thrEasy = 0.5 * state.partyPlayers, thrMed = 1.0 * state.partyPlayers,
-        thrHard = 1.5 * state.partyPlayers, thrDeadly = 2.0 * state.partyPlayers;
-  const threatRating = getThreatRating(netThreat, state.partyPlayers);
+async function _fetchAndRenderDifficulty() {
+  const actual = usingActualHP();
+  const pcHPAvg = getEffectivePCHPAvg();
 
-  let icon, cls;
-  if      (threatRating === 'Trivial') { icon = '💤'; cls = 'diff-trivial'; }
-  else if (threatRating === 'Easy')    { icon = '🌱'; cls = 'diff-easy'; }
-  else if (threatRating === 'Medium')  { icon = '⚔️';  cls = 'diff-medium'; }
-  else if (threatRating === 'Hard')    { icon = '🔥'; cls = 'diff-hard'; }
-  else                                  { icon = '💀'; cls = 'diff-deadly'; }
+  const toAdv = (map) => [...map].map(([idx, qty]) => {
+    const a = state.ADVERSARIES[idx];
+    return { type: a.Type, tier: a.Tier || state.partyTier, qty, hp: a.Health, dpr_fast: a['DPR (Fast)'] };
+  });
 
+  const payload = {
+    party_tier: state.partyTier,
+    party_players: state.partyPlayers,
+    enemies: toAdv(state.encounter),
+    allies:  toAdv(state.encounterAllies),
+    pc_hp_avg: pcHPAvg,
+  };
+
+  const data = await postDifficulty(payload);
+  const { threat, analysis } = data;
+
+  const ICONS = { Trivial:'💤', Easy:'🌱', Medium:'⚔️', Hard:'🔥', Deadly:'💀' };
+  const CLASSES = { Trivial:'diff-trivial', Easy:'diff-easy', Medium:'diff-medium', Hard:'diff-hard', Deadly:'diff-deadly' };
+  const cls = CLASSES[threat.rating] ?? 'diff-deadly';
+  const icon = ICONS[threat.rating] ?? '💀';
+
+  const { net_threat: netThreat, enemy_threat: totalThreat, ally_threat: allyThreat,
+          threshold_easy: thrEasy, threshold_medium: thrMed,
+          threshold_hard: thrHard, threshold_deadly: thrDeadly } = threat;
   const barMax = Math.max(thrDeadly, netThreat);
   const threatPct = Math.min(netThreat / barMax * 100, 100);
   const easyPct = thrEasy / barMax * 100, medPct = thrMed / barMax * 100, hardPct = thrHard / barMax * 100;
   const threatBarColor = cls==='diff-trivial'?'var(--trivial)':cls==='diff-easy'?'var(--easy)':cls==='diff-medium'?'var(--medium)':cls==='diff-hard'?'var(--hard)':'var(--deadly)';
 
-  const tk = String(state.partyTier), pk = String(state.partyPlayers);
-  const benchRounds = state.PC_DPR_ROUNDS[tk]?.[pk], bench = state.BOSS_BENCHMARK[tk], pcHP = state.PC_HP[tk];
   let analysisHTML = '';
-  if (benchRounds) {
-    let totalHP = 0, totalDPRFast = 0;
-    for (const [idx, qty] of state.encounter) { const a = state.ADVERSARIES[idx]; totalHP += a.Health * qty; totalDPRFast += a['DPR (Fast)'] * qty; }
-    let allyTotalHP = 0, allyTotalDPR = 0, allyCount = 0;
-    for (const [idx, qty] of state.encounterAllies) { const a = state.ADVERSARIES[idx]; allyTotalHP += a.Health * qty; allyTotalDPR += a['DPR (Fast)'] * qty; allyCount += qty; }
-    const partyDPR = bench.hp / benchRounds;
-    const effectivePartyDPR = partyDPR + allyTotalDPR;
-    const estRounds = Math.ceil(totalHP / effectivePartyDPR);
-    const hpRatio = totalHP / bench.hp, dprRatio = totalDPRFast / bench.dpr_fast;
-    const actual = usingActualHP(), pcHPAvg = getEffectivePCHPAvg();
-    const partyHPAvg = state.partyPlayers * pcHPAvg + allyTotalHP;
-    const damageThreat = (totalDPRFast * estRounds) / partyHPAvg;
-    const benchRounds4p = state.PC_DPR_ROUNDS[tk]['4'];
-    const dtCalibration = bench.dpr_fast * benchRounds4p / (4 * pcHPAvg);
-    const adjDamageThreat = damageThreat / dtCalibration;
+  if (analysis) {
+    const { est_rounds: estRounds, bench_rounds: benchRounds, hp_ratio: hpRatio, dpr_ratio: dprRatio,
+            damage_threat: damageThreat, adj_damage_threat: adjDamageThreat,
+            party_hp_avg: partyHPAvg, pc_hp_min, pc_hp_max,
+            bench_hp, bench_dpr_fast, party_dpr: partyDPR,
+            enemy_total_hp: totalHP, enemy_total_dpr: totalDPRFast,
+            ally_count: allyCount, ally_hp: allyTotalHP, ally_dpr: allyTotalDPR } = analysis;
     const hpBarPct = Math.min(hpRatio / 2 * 100, 100), dprBarPct = Math.min(dprRatio / 2 * 100, 100), dmgBarPct = Math.min(damageThreat / 2.5 * 100, 100);
     const hpColor    = hpRatio <= 1 ? 'var(--easy)' : hpRatio <= 1.5 ? 'var(--hard)' : 'var(--deadly)';
     const dprColor   = dprRatio <= 1 ? 'var(--medium)' : dprRatio <= 1.5 ? 'var(--hard)' : 'var(--deadly)';
     const threatColor = adjDamageThreat <= 0.6 ? 'var(--easy)' : adjDamageThreat <= 1.2 ? 'var(--medium)' : adjDamageThreat <= 2 ? 'var(--hard)' : 'var(--deadly)';
-    const hpValDisplay = actual ? `${Math.round(state.partyPlayers * pcHPAvg)}` : `${state.partyPlayers*pcHP.min}–${state.partyPlayers*pcHP.max}`;
-    const hpSubDisplay = actual ? `${Math.round(pcHPAvg)} avg per PC <span class="actual-badge">actual</span>` : `${pcHP.min}–${pcHP.max} per PC · Tier ${state.partyTier}`;
+    const hpValDisplay = actual ? `${Math.round(state.partyPlayers * pcHPAvg)}` : `${state.partyPlayers*pc_hp_min}–${state.partyPlayers*pc_hp_max}`;
+    const hpSubDisplay = actual ? `${Math.round(pcHPAvg)} avg per PC <span class="actual-badge">actual</span>` : `${pc_hp_min}–${pc_hp_max} per PC · Tier ${state.partyTier}`;
     const allyNote = allyCount > 0 ? `<div class="note-box" style="margin-top:8px;border-color:var(--easy)">Includes <strong style="color:var(--easy)">${allyCount} friendly NPC${allyCount > 1 ? 's' : ''}</strong>: +${allyTotalHP} HP, +${allyTotalDPR} DPR on your side.</div>` : '';
     analysisHTML = `
       <div class="analysis-header">Combat Analysis</div>
@@ -380,24 +385,25 @@ export function updateDifficulty() {
         <div class="diff-stat-card"><div class="diff-stat-label">Est. Rounds to Clear</div><div class="diff-stat-value">${estRounds}</div><div class="diff-stat-sub">Benchmark: ${benchRounds} rds</div></div>
         <div class="diff-stat-card"><div class="diff-stat-label">Damage Threat</div><div class="diff-stat-value" style="color:${threatColor}">${Math.round(damageThreat*100)}%</div><div class="diff-stat-sub">total dmg ÷ party HP</div></div>
         <div class="diff-stat-card"><div class="diff-stat-label">Party HP (${state.partyPlayers} PCs${allyCount>0?` +${allyCount} ally`:''})</div><div class="diff-stat-value">${hpValDisplay}${allyCount>0?`<span style="color:var(--easy);font-size:13px"> +${allyTotalHP}</span>`:''}</div><div class="diff-stat-sub">${hpSubDisplay}</div></div>
-        <div class="diff-stat-card"><div class="diff-stat-label">DPR Pressure</div><div class="diff-stat-value">${Math.round(dprRatio*100)}%</div><div class="diff-stat-sub">vs ${bench.dpr_fast} DPR standard boss</div></div>
+        <div class="diff-stat-card"><div class="diff-stat-label">DPR Pressure</div><div class="diff-stat-value">${Math.round(dprRatio*100)}%</div><div class="diff-stat-sub">vs ${bench_dpr_fast} DPR standard boss</div></div>
       </div>
-      <div class="bar-section"><div class="bar-label">Enemy HP Load <span>${totalHP} HP vs ${bench.hp} benchmark</span></div><div class="bar-track"><div class="bar-fill" style="width:${hpBarPct}%;background:${hpColor}"></div><div class="bar-benchmark-marker" style="left:50%"></div></div></div>
-      <div class="bar-section"><div class="bar-label">Enemy DPR Pressure <span>${totalDPRFast} DPR vs ${bench.dpr_fast} benchmark</span></div><div class="bar-track"><div class="bar-fill" style="width:${dprBarPct}%;background:${dprColor}"></div><div class="bar-benchmark-marker" style="left:50%"></div></div></div>
+      <div class="bar-section"><div class="bar-label">Enemy HP Load <span>${totalHP} HP vs ${bench_hp} benchmark</span></div><div class="bar-track"><div class="bar-fill" style="width:${hpBarPct}%;background:${hpColor}"></div><div class="bar-benchmark-marker" style="left:50%"></div></div></div>
+      <div class="bar-section"><div class="bar-label">Enemy DPR Pressure <span>${totalDPRFast} DPR vs ${bench_dpr_fast} benchmark</span></div><div class="bar-track"><div class="bar-fill" style="width:${dprBarPct}%;background:${dprColor}"></div><div class="bar-benchmark-marker" style="left:50%"></div></div></div>
       <div class="bar-section"><div class="bar-label">Damage Threat <span>${Math.round(damageThreat*100)}% of ${Math.round(partyHPAvg)} effective party HP</span></div><div class="bar-track"><div class="bar-fill" style="width:${dmgBarPct}%;background:${threatColor}"></div><div class="bar-benchmark-marker" style="left:40%"></div></div></div>
       <div class="note-box">${actual ? 'Using <strong>actual PC HP</strong> from Party Members.' : `Using formula range (Tier ${state.partyTier}, STR 0→9).`}</div>
       ${allyNote}`;
   }
 
-  const allyThreatLine = allyThreat > 0 ? ` − <span style="color:var(--easy)">${allyThreat%1===0?allyThreat:allyThreat.toFixed(2)} ally</span> = <strong>${netThreat%1===0?netThreat:netThreat.toFixed(2)} net</strong>` : '';
-  el.innerHTML = `
-    <div class="difficulty-rating ${cls}"><span class="rating-icon">${icon}</span><span class="rating-label">${threatRating}</span></div>
+  const fmt = v => v % 1 === 0 ? v : v.toFixed(2);
+  const allyThreatLine = allyThreat > 0 ? ` − <span style="color:var(--easy)">${fmt(allyThreat)} ally</span> = <strong>${fmt(netThreat)} net</strong>` : '';
+  document.getElementById('difficultyOutput').innerHTML = `
+    <div class="difficulty-rating ${cls}"><span class="rating-icon">${icon}</span><span class="rating-label">${threat.rating}</span></div>
     <div class="threat-info-row">
-      <span>Enemy Threat: <strong>${totalThreat%1===0?totalThreat:totalThreat.toFixed(2)}</strong>${allyThreatLine}</span>
+      <span>Enemy Threat: <strong>${fmt(totalThreat)}</strong>${allyThreatLine}</span>
       <span>Easy ≥${thrEasy} · Medium ≥${thrMed} · Hard ≥${thrHard}</span>
     </div>
     <div class="bar-section">
-      <div class="bar-label">Net Threat Load <span>${netThreat%1===0?netThreat:netThreat.toFixed(2)} / ${thrDeadly} Deadly threshold</span></div>
+      <div class="bar-label">Net Threat Load <span>${fmt(netThreat)} / ${thrDeadly} Deadly threshold</span></div>
       <div class="bar-track" style="height:10px">
         <div class="bar-fill" style="width:${threatPct}%;background:${threatBarColor}"></div>
         <div class="bar-benchmark-marker" style="left:${easyPct}%"></div>
@@ -416,7 +422,7 @@ export function updateDifficulty() {
 // ── WORLD VISIBILITY ──────────────────────────────────────────────────────────
 export function getEnabledWorlds() {
   const s = localStorage.getItem('enabledWorlds');
-  return s ? new Set(JSON.parse(s)) : new Set(ALL_WORLDS);
+  return s ? new Set(JSON.parse(s)) : new Set(state.WORLDS);
 }
 
 export function saveEnabledWorlds(set) {

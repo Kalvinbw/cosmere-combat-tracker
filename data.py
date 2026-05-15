@@ -3,6 +3,10 @@ import os
 
 CSV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "adversaries.csv")
 
+WORLDS = ['Stormlight', 'Mistborn', 'Worldhopper']
+TYPES  = ['Minion', 'Rival', 'Boss']
+TIERS  = [1, 2, 3, 4]
+
 COLUMNS = [
     "World", "Tier", "Adversary Name", "Type",
     "Physical Defense", "Cognitive Defense", "Spiritual Defense",

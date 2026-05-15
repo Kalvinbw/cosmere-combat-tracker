@@ -3,7 +3,7 @@ import { fetchAdversaries, fetchBenchmarks, fetchConfig } from './api.js';
 import {
   showTab, reloadAdversaries,
   setTier, setPlayers, syncPCCount, renderPCList, pcSetStat,
-  updateBenchmark, updateWorldDropdown,
+  updateBenchmark, updateWorldDropdown, saveParty, loadParty,
   renderEnemyList, addEnemy, addAlly,
   removeEnemy, removeAlly, changeQty, changeAllyQty, clearEncounter, renderEncounter,
   updateDifficulty,
@@ -49,21 +49,34 @@ Object.assign(window, {
   toggleWorld, syncFromSheet, adminCreateAdversary,
   // expose pcs array for inline oninput handlers like "pcs[0].name=this.value"
   get pcs() { return state.pcs; },
+  saveParty,
 });
+
+function populateSelects(config) {
+  document.querySelectorAll('[data-populate]').forEach(sel => {
+    const key    = sel.dataset.populate;
+    const blank  = sel.dataset.blank ?? '';
+    const prefix = sel.dataset.labelPrefix ?? '';
+    sel.innerHTML = (blank ? `<option value="">${blank}</option>` : '') +
+      config[key].map(v => `<option value="${v}">${prefix}${v}</option>`).join('');
+  });
+}
 
 async function init() {
   try {
     const [ar, br, cr] = await Promise.all([fetchAdversaries(), fetchBenchmarks(), fetchConfig()]);
-    state.ADVERSARIES = ar;
+    state.ADVERSARIES   = ar;
     state.PC_DPR_ROUNDS = br.pc_dpr_rounds;
     state.BOSS_BENCHMARK = br.boss_benchmark;
-    state.PC_HP = br.pc_hp;
-    state.adminLocked = cr.admin_locked;
+    state.PC_HP         = br.pc_hp;
+    state.WORLDS        = cr.worlds;
+    state.adminLocked   = cr.admin_locked;
+    populateSelects(cr);
   } catch (e) {
     document.getElementById('enemyList').innerHTML = '<div class="no-results" style="color:var(--deadly)">Failed to load data.</div>';
     return;
   }
-  syncPCCount(); updateBenchmark(); updateWorldDropdown(); renderEnemyList(); renderEncounter(); updateDifficulty(); initAdminPanel();
+  loadParty(); syncPCCount(); updateBenchmark(); updateWorldDropdown(); renderEnemyList(); renderEncounter(); updateDifficulty(); initAdminPanel();
 }
 
 document.addEventListener('DOMContentLoaded', init);

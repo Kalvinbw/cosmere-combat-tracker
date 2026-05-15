@@ -1,4 +1,4 @@
-import { state, ALL_WORLDS, SHEET_ID } from './state.js';
+import { state, SHEET_ID } from './state.js';
 import { postAdversary } from './api.js';
 import { reloadAdversaries, getEnabledWorlds, saveEnabledWorlds, updateWorldDropdown, renderEnemyList } from './encounter.js';
 
@@ -85,7 +85,7 @@ export function doAdminLogout() {
 
 export function renderWorldToggles() {
   const enabled = getEnabledWorlds();
-  document.getElementById('worldToggles').innerHTML = ALL_WORLDS.map(w => `
+  document.getElementById('worldToggles').innerHTML = state.WORLDS.map(w => `
     <label class="world-toggle-label">
       <input type="checkbox" ${enabled.has(w) ? 'checked' : ''} onchange="toggleWorld('${w}',this.checked)">
       ${w}
@@ -123,7 +123,7 @@ export async function syncFromSheet() {
   const existingKeys = new Set(state.ADVERSARIES.map(a => `${a.World}|${a.Tier}|${a['Adversary Name']}`));
   const newOnes = [];
 
-  for (const world of ALL_WORLDS) {
+  for (const world of state.WORLDS) {
     for (const tier of [1, 2, 3, 4]) {
       const sheetName = `${world}Tier${tier}`;
       const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;

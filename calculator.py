@@ -80,8 +80,17 @@ def get_rating(score):
     return "Deadly"
 
 
+def get_threat_rating(net_threat, num_pcs):
+    easy, medium, hard, deadly = 0.5 * num_pcs, 1.0 * num_pcs, 1.5 * num_pcs, 2.0 * num_pcs
+    if net_threat < easy:   return "Trivial"
+    if net_threat < medium: return "Easy"
+    if net_threat < hard:   return "Medium"
+    if net_threat < deadly: return "Hard"
+    return "Deadly"
+
+
 def compute_difficulty(total_hp, total_dpr_fast, party_tier, party_players,
-                       ally_hp=0, ally_dpr_fast=0):
+                       ally_hp=0, ally_dpr_fast=0, pc_hp_avg=None):
     """Returns difficulty dict, or None if no benchmark exists for tier/player combo."""
     tier_key = str(party_tier)
     player_key = str(party_players)
@@ -93,7 +102,8 @@ def compute_difficulty(total_hp, total_dpr_fast, party_tier, party_players,
     bench = BOSS_BENCHMARK[tier_key]
     pc_hp = PC_HP[tier_key]
 
-    pc_hp_avg = (pc_hp["min"] + pc_hp["max"]) / 2
+    if pc_hp_avg is None:
+        pc_hp_avg = (pc_hp["min"] + pc_hp["max"]) / 2
     party_hp_avg = party_players * pc_hp_avg + ally_hp
 
     party_dpr = bench["hp"] / bench_rounds

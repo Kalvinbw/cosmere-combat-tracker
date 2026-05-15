@@ -1,8 +1,8 @@
 export const SHEET_ID = '1znToovH68XfbhI5YPvEjsou3ADRslqX49Swf7UofZPA';
-export const ALL_WORLDS = ['Stormlight','Mistborn','Elantris','Warbreaker','Wax','Wayne','Worldhopper'];
 
 export const state = {
   ADVERSARIES: [],
+  WORLDS: [],
   PC_DPR_ROUNDS: {},
   BOSS_BENCHMARK: {},
   PC_HP: {},
