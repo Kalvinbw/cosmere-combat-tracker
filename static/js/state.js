@@ -20,6 +20,7 @@ export const state = {
   combatRound: 1,
   nextCombatId: 0,
   combatInvEditing: new Set(),
+  combatImages: new Map(),
   adminLocked: false,
   adminAuthed: false,
 };

@@ -1,11 +1,15 @@
 import os
-from flask import Flask, jsonify, request, render_template
+import time
+from flask import Flask, jsonify, request, render_template, send_from_directory
+from werkzeug.utils import secure_filename
 from whitenoise import WhiteNoise
 from calculator import PC_DPR_ROUNDS, BOSS_BENCHMARK, PC_HP, compute_difficulty, compute_threat, get_threat_rating
-from data import load_adversaries, add_adversary, WORLDS, TYPES, TIERS
+from data import load_adversaries, add_adversary, update_adversary_image, WORLDS, TYPES, TIERS
 
 app = Flask(__name__)
 app.wsgi_app = WhiteNoise(app.wsgi_app, root=os.path.join(os.path.dirname(__file__), 'static'), prefix='static', max_age=31536000)
+
+UPLOAD_DIR = os.path.join(os.path.dirname(__file__), 'uploads', 'images')
 
 
 @app.route("/")
@@ -29,6 +33,30 @@ def post_adversary():
             return jsonify({"error": f"Missing required field: {field}"}), 400
     add_adversary(data)
     return jsonify({"ok": True}), 201
+
+
+@app.route("/api/adversaries/image", methods=["POST"])
+def post_adversary_image():
+    admin_key = os.environ.get("ADMIN_KEY")
+    if admin_key and request.headers.get("X-Admin-Key") != admin_key:
+        return jsonify({"error": "Admin key required"}), 403
+    if 'file' not in request.files:
+        return jsonify({"error": "No file provided"}), 400
+    file = request.files['file']
+    name = request.form.get('name', '').strip()
+    if not file or not name:
+        return jsonify({"error": "File and name required"}), 400
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    ext = os.path.splitext(secure_filename(file.filename))[1].lower() or '.jpg'
+    filename = secure_filename(f"{name}_{int(time.time())}{ext}")
+    file.save(os.path.join(UPLOAD_DIR, filename))
+    update_adversary_image(name, filename)
+    return jsonify({"image": filename}), 200
+
+
+@app.route("/images/<path:filename>")
+def serve_image(filename):
+    return send_from_directory(UPLOAD_DIR, filename)
 
 
 @app.route("/api/config")

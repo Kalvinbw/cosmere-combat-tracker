@@ -54,7 +54,17 @@ export async function saveEnemy() {
     }
     const res = await postAdversary(payload, headers);
     if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'Server error'); }
-    okEl.textContent = `"${name}" saved.`; okEl.style.display = 'block';
+    const imageFile = document.getElementById('f-image')?.files[0];
+    if (imageFile) {
+      const fd = new FormData();
+      fd.append('file', imageFile);
+      fd.append('name', name);
+      const imgRes = await fetch('/api/adversaries/image', { method: 'POST', headers, body: fd });
+      okEl.textContent = imgRes.ok ? `"${name}" saved with image.` : `"${name}" saved (image upload failed).`;
+    } else {
+      okEl.textContent = `"${name}" saved.`;
+    }
+    okEl.style.display = 'block';
     await reloadAdversaries();
     setTimeout(closeModal, 1200);
   } catch (e) { errEl.textContent = e.message; errEl.style.display = 'block'; }

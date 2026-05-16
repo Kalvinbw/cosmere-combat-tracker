@@ -13,9 +13,10 @@ COLUMNS = [
     "Health", "Focus", "Investiture",
     "Physical Skills", "Cognitive Skills", "Spiritual Skills", "Invested Skills",
     "To Hit Bonus", "DPR (Fast)", "DPR (Slow)",
+    "Image",
 ]
 
-_STRING_COLS = {"World", "Adversary Name", "Type"}
+_STRING_COLS = {"World", "Adversary Name", "Type", "Image"}
 
 _cache = {"data": None, "mtime": None}
 
@@ -37,12 +38,26 @@ def load_adversaries():
                     except (ValueError, TypeError):
                         adv[col] = 0
                 else:
-                    adv[col] = val
+                    adv[col] = val or ""
             adversaries.append(adv)
 
     _cache["data"] = adversaries
     _cache["mtime"] = mtime
     return adversaries
+
+
+def update_adversary_image(name, filename):
+    rows = []
+    with open(CSV_PATH, newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            if row.get("Adversary Name") == name:
+                row["Image"] = filename
+            rows.append(row)
+    with open(CSV_PATH, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=COLUMNS)
+        writer.writeheader()
+        writer.writerows(rows)
+    _cache["mtime"] = None
 
 
 def add_adversary(data):

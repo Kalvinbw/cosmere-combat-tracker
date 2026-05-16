@@ -16,6 +16,7 @@ import {
   setAllyTurn, applyAllyHP, adjustAllyRes, toggleAllyDefeated, toggleAllyInvInput, setAllyInv,
   pcSetTurn, pcApplyHP, pcAdjRes, pcToggleDown,
   addMidCombat, openMidCombatModal, closeMidCombatModal, renderMidCombatList, selectMCAdversary, confirmMidCombat,
+  attachCombatImage, showLightbox, closeLightbox,
 } from './combat.js';
 import {
   openModal, closeModal, onOverlayClick, saveEnemy,
@@ -43,6 +44,7 @@ Object.assign(window, {
   pcSetTurn, pcApplyHP, pcAdjRes, pcToggleDown,
   // mid-combat
   addMidCombat, openMidCombatModal, closeMidCombatModal, renderMidCombatList, selectMCAdversary, confirmMidCombat,
+  attachCombatImage, showLightbox, closeLightbox,
   // modal & admin
   openModal, closeModal, onOverlayClick, saveEnemy,
   doAdminLogin, doAdminLogout,

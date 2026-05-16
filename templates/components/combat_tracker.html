@@ -32,6 +32,11 @@
   </div>
 </div>
 
+<!-- Stat Block Lightbox -->
+<div id="statLightbox" style="display:none" class="stat-lightbox" onclick="closeLightbox()">
+  <img id="statLightboxImg" src="" alt="Stat block" onclick="event.stopPropagation()">
+</div>
+
 <!-- Add Combatant Mid-Fight Modal -->
 <div class="modal-overlay" id="midCombatOverlay" onclick="if(event.target===this) closeMidCombatModal()">
   <div class="modal">
