@@ -14,7 +14,7 @@ export function startCombat() {
     const inv = state.encounterInvestiture.get(idx) ?? a.Investiture;
     for (let i = 1; i <= qty; i++) {
       state.combatants.push({
-        id: state.nextCombatId++, adv: a,
+        id: state.nextCombatId++, adv: a, advIdx: idx,
         label: qty > 1 ? `${a['Adversary Name']} #${i}` : a['Adversary Name'],
         maxHP: a.Health, currentHP: a.Health,
         maxFocus: a.Focus, currentFocus: a.Focus,
@@ -28,7 +28,7 @@ export function startCombat() {
     const inv = state.encounterAllyInvestiture.get(idx) ?? a.Investiture;
     for (let i = 1; i <= qty; i++) {
       state.allies.push({
-        id: state.nextCombatId++, adv: a,
+        id: state.nextCombatId++, adv: a, advIdx: idx,
         label: qty > 1 ? `${a['Adversary Name']} #${i}` : a['Adversary Name'],
         maxHP: a.Health, currentHP: a.Health,
         maxFocus: a.Focus, currentFocus: a.Focus,
@@ -132,6 +132,7 @@ function buildEnemyCard(c) {
   const invPct   = c.maxInvestiture > 0 ? Math.max(0, c.currentInvestiture / c.maxInvestiture * 100) : 0;
   const hpColor  = hpPct > 60 ? 'var(--easy)' : hpPct > 25 ? 'var(--medium)' : hpPct > 0 ? 'var(--hard)' : 'var(--deadly)';
   const fastDim = c.turnType === 'slow', slowDim = c.turnType === 'fast';
+  const imgSrc = state.combatImages.get(c.advIdx) || (a['Image'] ? `/images/${a['Image']}` : null);
   return `<div class="combatant-card${c.defeated ? ' defeated' : ''}">
     <div class="cc-header">
       <div><div class="cc-name">${c.label}</div><div class="cc-meta"><span class="type-badge type-${a.Type}">${a.Type}</span> T${a.Tier} · ${a.World}</div></div>
@@ -177,6 +178,10 @@ function buildEnemyCard(c) {
       <div class="cc-stat-row"><span class="cc-stat-key">ATK</span> +${a['To Hit Bonus']} hit · <span class="cc-dpr-fast${fastDim?' dim':''}">Fast ${a['DPR (Fast)']}</span> · <span class="cc-dpr-slow${slowDim?' dim':''}">Slow ${a['DPR (Slow)']}</span></div>
       <div class="cc-stat-row"><span class="cc-stat-key">SKL</span> Phys ${a['Physical Skills']} · Cog ${a['Cognitive Skills']} · Spi ${a['Spiritual Skills']}${a['Invested Skills']>0?` · Inv ${a['Invested Skills']}`:''}</div>
     </div>
+    <div class="cc-img-row">
+      ${imgSrc ? `<img class="stat-block-thumb" src="${imgSrc}" onclick="showLightbox(${c.advIdx})" alt="Stat block">` : ''}
+      <button class="upload-img-btn" onclick="attachCombatImage(${c.advIdx})" title="Attach stat block image">📷</button>
+    </div>
     <button class="cc-defeat-btn${c.defeated?' cc-revive-btn':''}" onclick="toggleDefeated(${c.id})">${c.defeated?'Revive':'Defeat'}</button>
   </div>`;
 }
@@ -188,6 +193,7 @@ function buildAllyCard(c) {
   const invPct   = c.maxInvestiture > 0 ? Math.max(0, c.currentInvestiture / c.maxInvestiture * 100) : 0;
   const hpColor  = hpPct > 60 ? 'var(--easy)' : hpPct > 25 ? 'var(--medium)' : hpPct > 0 ? 'var(--hard)' : 'var(--deadly)';
   const fastDim = c.turnType === 'slow', slowDim = c.turnType === 'fast';
+  const imgSrc = state.combatImages.get(c.advIdx) || (a['Image'] ? `/images/${a['Image']}` : null);
   return `<div class="combatant-card ally-card${c.defeated ? ' defeated' : ''}">
     <div class="cc-header">
       <div><div class="cc-name">${c.label}</div><div class="cc-meta"><span style="color:var(--easy);font-weight:700">Ally</span> · <span class="type-badge type-${a.Type}">${a.Type}</span> T${a.Tier} · ${a.World}</div></div>
@@ -233,6 +239,10 @@ function buildAllyCard(c) {
       <div class="cc-stat-row"><span class="cc-stat-key">ATK</span> +${a['To Hit Bonus']} hit · <span class="cc-dpr-fast${fastDim?' dim':''}">Fast ${a['DPR (Fast)']}</span> · <span class="cc-dpr-slow${slowDim?' dim':''}">Slow ${a['DPR (Slow)']}</span></div>
       <div class="cc-stat-row"><span class="cc-stat-key">SKL</span> Phys ${a['Physical Skills']} · Cog ${a['Cognitive Skills']} · Spi ${a['Spiritual Skills']}${a['Invested Skills']>0?` · Inv ${a['Invested Skills']}`:''}</div>
     </div>
+    <div class="cc-img-row">
+      ${imgSrc ? `<img class="stat-block-thumb" src="${imgSrc}" onclick="showLightbox(${c.advIdx})" alt="Stat block">` : ''}
+      <button class="upload-img-btn" onclick="attachCombatImage(${c.advIdx})" title="Attach stat block image">📷</button>
+    </div>
     <button class="cc-defeat-btn${c.defeated?' cc-revive-btn':''}" onclick="toggleAllyDefeated(${c.id})">${c.defeated?'Revive':'Defeat'}</button>
   </div>`;
 }
@@ -271,7 +281,7 @@ export function addMidCombat(idx, qty, isAlly, investiture) {
   for (let i = 1; i <= qty; i++) {
     const label = qty > 1 ? `${a['Adversary Name']} #${i}` : a['Adversary Name'];
     const c = {
-      id: state.nextCombatId++, adv: a, label,
+      id: state.nextCombatId++, adv: a, advIdx: idx, label,
       maxHP: a.Health, currentHP: a.Health,
       maxFocus: a.Focus, currentFocus: a.Focus,
       maxInvestiture: inv, currentInvestiture: inv,
@@ -339,6 +349,32 @@ export function selectMCAdversary(idx) {
   invLabel.style.display = a.Investiture === 0 ? 'block' : 'none';
   document.getElementById('mcInv').value = '';
   renderMidCombatList();
+}
+
+export function attachCombatImage(advIdx) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = () => {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => { state.combatImages.set(advIdx, e.target.result); renderCombat(); };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
+export function showLightbox(advIdx) {
+  const src = state.combatImages.get(advIdx) ||
+    (state.ADVERSARIES[advIdx]?.['Image'] ? `/images/${state.ADVERSARIES[advIdx]['Image']}` : null);
+  if (!src) return;
+  document.getElementById('statLightboxImg').src = src;
+  document.getElementById('statLightbox').style.display = 'flex';
+}
+
+export function closeLightbox() {
+  document.getElementById('statLightbox').style.display = 'none';
 }
 
 export function confirmMidCombat() {
